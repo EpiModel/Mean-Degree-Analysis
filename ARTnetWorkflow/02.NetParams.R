@@ -1,6 +1,6 @@
 
 ##
-## Network parameters analysis for ARTnet Data
+## 02 - Network parameter analysis for ARTnet-RADAR Model
 ##
 
 ## Packages ##
@@ -12,7 +12,7 @@ d <- ARTnet.wide
 l <- ARTnet.long
 
 ## Inputs ##
-city_name <- "Atlanta"
+city_name <- "Chicago"
 coef_name <- paste0("city2", city_name)
 
 
@@ -146,6 +146,14 @@ table(l$hiv.concord.pos)
 
 
 
+
+# Age Filtering
+l <- filter(l, age >= 16 & age <= 29)
+nrow(l)
+
+d <- filter(d, age >= 16 & age <= 29)
+nrow(d)
+
 ## Setup output list ##
 
 out <- list()
@@ -169,9 +177,9 @@ pred <- predict(mod, newdata = dat, type = "response")
 out$main$md.main <- as.numeric(pred)
 
 
-## 1B: nodematch("age.grp") ##
+## 1B: nodematch("age.grp", diff = TRUE) ##
 
-age.breaks <- c(0, 24, 34, 44, 54, 64, 100)
+age.breaks <- c(0, 18, 24, 29, 100)
 lmain$index.age.grp <- cut(lmain$age, age.breaks, labels = FALSE)
 lmain$part.age.grp <- cut(as.numeric(lmain$p_age_imp), age.breaks, labels = FALSE)
 data.frame(lmain$age, lmain$index.age.grp, lmain$p_age_imp, lmain$part.age.grp)
@@ -182,10 +190,25 @@ mod <- glm(same.age.grp ~ city2 + index.age.grp,
            data = lmain, family = binomial())
 summary(mod)
 
-dat <- data.frame(city2 = city_name, index.age.grp = 1:5)
+dat <- data.frame(city2 = city_name, index.age.grp = 1:3)
 pred <- predict(mod, newdata = dat, type = "response")
 
 out$main$nm.age.grp <- as.numeric(pred)
+
+
+
+
+## 1Bb: nodematch("age.grp", diff = FALSE) ##
+
+mod <- glm(same.age.grp ~ city2,
+           data = lmain, family = binomial())
+summary(mod)
+
+dat <- data.frame(city2 = city_name)
+pred <- predict(mod, newdata = dat, type = "response")
+
+out$main$nm.age.grp_diffF <- as.numeric(pred)
+
 
 
 ## 1C: nodefactor("age.grp") ##
@@ -196,10 +219,11 @@ mod <- glm(deg.main ~ city2 + age.grp + sqrt(age.grp),
            data = d, family = poisson())
 summary(mod)
 
-dat <- data.frame(city2 = city_name, age.grp = 1:5)
+dat <- data.frame(city2 = city_name, age.grp = 1:3)
 pred <- predict(mod, newdata = dat, type = "response")
 
 out$main$nf.age.grp <- as.numeric(pred)
+
 
 
 ## 1D: nodematch("race", diff = TRUE) ##
@@ -244,6 +268,7 @@ pred <- predict(mod, newdata = dat, type = "response")
 out$main$nf.race <- as.numeric(pred)
 
 
+
 ## 1F: nodefactor("deg.casl") ##
 
 mod <- glm(deg.main ~ city2 + deg.casl,
@@ -257,6 +282,7 @@ out$main$nf.deg.casl <- as.numeric(pred)
 
 deg.casl.dist <- prop.table(table(d$deg.casl[d$city2 == city_name]))
 out$main$deg.casl.dist <- as.numeric(deg.casl.dist)
+
 
 
 ## 1G: concurrent ##
@@ -283,12 +309,13 @@ pred <- predict(mod, newdata = dat, type = "response")
 out$main$nf.diag.status <- as.numeric(pred)
 
 
+
 ## Durations ##
 
 # overall
 durs.main <- lmain %>%
   filter(RAI == 1 | IAI == 1) %>%
-  filter(index.age.grp < 6) %>%
+  filter(index.age.grp < 4) %>%
   filter(ongoing2 == 1) %>%
   summarise(mean.dur = mean(duration, na.rm = TRUE),
             median.dur = median(duration, na.rm = TRUE)) %>%
@@ -297,7 +324,7 @@ durs.main <- lmain %>%
 # create city weights
 durs.main.geo <- lmain %>%
   filter(RAI == 1 | IAI == 1) %>%
-  filter(index.age.grp < 6) %>%
+  filter(index.age.grp < 4) %>%
   filter(ongoing2 == 1) %>%
   filter(city2 == city_name) %>%
   summarise(mean.dur = mean(duration, na.rm = TRUE),
@@ -320,7 +347,7 @@ out$main$durs.main.homog <- durs.main
 # first, non-matched by age group
 durs.main.nonmatch <- lmain %>%
   filter(RAI == 1 | IAI == 1) %>%
-  filter(index.age.grp < 6) %>%
+  filter(index.age.grp < 4) %>%
   filter(ongoing2 == 1) %>%
   filter(same.age.grp == 0) %>%
   # group_by(index.age.grp) %>%
@@ -332,7 +359,7 @@ durs.main.nonmatch$index.age.grp <- 0
 # then, matched within age-groups
 durs.main.matched <- lmain %>%
   filter(RAI == 1 | IAI == 1) %>%
-  filter(index.age.grp < 6) %>%
+  filter(index.age.grp < 4) %>%
   filter(ongoing2 == 1) %>%
   filter(same.age.grp == 1) %>%
   group_by(index.age.grp) %>%
@@ -369,9 +396,8 @@ pred <- predict(mod, newdata = dat, type = "response")
 out$casl$md.casl <- as.numeric(pred)
 
 
-## 2B: nodematch("age.grp") ##
+## 2B: nodematch("age.grp", diff = TRUE) ##
 
-age.breaks <- c(0, 24, 34, 44, 54, 64, 100)
 lcasl$index.age.grp <- cut(lcasl$age, age.breaks, labels = FALSE)
 lcasl$part.age.grp <- cut(as.numeric(lcasl$p_age_imp), age.breaks, labels = FALSE)
 data.frame(lcasl$age, lcasl$index.age.grp, lcasl$p_age_imp, lcasl$part.age.grp)
@@ -382,7 +408,7 @@ mod <- glm(same.age.grp ~ city2 + index.age.grp,
            data = lcasl, family = binomial())
 summary(mod)
 
-dat <- data.frame(city2 = city_name, index.age.grp = 1:5)
+dat <- data.frame(city2 = city_name, index.age.grp = 1:3)
 pred <- predict(mod, newdata = dat, type = "response")
 
 out$casl$nm.age.grp <- as.numeric(pred)
@@ -394,6 +420,18 @@ out$casl$nm.age.grp <- as.numeric(pred)
 # abs(lcasl$age - lcasl$p_age_imp)
 
 
+## 2B: nodematch("age.grp", diff = FALSE) ##
+
+mod <- glm(same.age.grp ~ city2,
+           data = lcasl, family = binomial())
+summary(mod)
+
+dat <- data.frame(city2 = city_name)
+pred <- predict(mod, newdata = dat, type = "response")
+
+out$casl$nm.age.grp_diffF <- as.numeric(pred)
+
+
 ## 2C: nodefactor("age.grp") ##
 
 d$age.grp <- cut(d$age, age.breaks, labels = FALSE)
@@ -402,7 +440,7 @@ mod <- glm(deg.casl ~ city2 + age.grp + sqrt(age.grp),
            data = d, family = poisson())
 summary(mod)
 
-dat <- data.frame(city2 = city_name, age.grp = 1:5)
+dat <- data.frame(city2 = city_name, age.grp = 1:3)
 pred <- predict(mod, newdata = dat, type = "response")
 
 out$casl$nf.age.grp <- as.numeric(pred)
@@ -492,7 +530,7 @@ out$casl$nf.diag.status <- as.numeric(pred)
 # overall
 durs.casl <- lcasl %>%
   filter(RAI == 1 | IAI == 1) %>%
-  filter(index.age.grp < 6) %>%
+  filter(index.age.grp < 4) %>%
   filter(ongoing2 == 1) %>%
   summarise(mean.dur = mean(duration, na.rm = TRUE),
             median.dur = median(duration, na.rm = TRUE)) %>%
@@ -501,7 +539,7 @@ durs.casl <- lcasl %>%
 # create city weights
 durs.casl.geo <- lcasl %>%
   filter(RAI == 1 | IAI == 1) %>%
-  filter(index.age.grp < 6) %>%
+  filter(index.age.grp < 4) %>%
   filter(ongoing2 == 1) %>%
   filter(city2 == city_name) %>%
   summarise(mean.dur = mean(duration, na.rm = TRUE),
@@ -524,7 +562,7 @@ out$casl$durs.casl.homog <- durs.casl
 # first, non-matched by age group
 durs.casl.nonmatch <- lcasl %>%
   filter(RAI == 1 | IAI == 1) %>%
-  filter(index.age.grp < 6) %>%
+  filter(index.age.grp < 4) %>%
   filter(ongoing2 == 1) %>%
   filter(same.age.grp == 0) %>%
   # group_by(index.age.grp) %>%
@@ -536,7 +574,7 @@ durs.casl.nonmatch$index.age.grp <- 0
 # then, matched within age-groups
 durs.casl.matched <- lcasl %>%
   filter(RAI == 1 | IAI == 1) %>%
-  filter(index.age.grp < 6) %>%
+  filter(index.age.grp < 4) %>%
   filter(same.age.grp == 1) %>%
   filter(ongoing2 == 1) %>%
   group_by(index.age.grp) %>%
@@ -579,9 +617,8 @@ pred <- predict(mod, newdata = dat, type = "response")/52
 out$inst$md.inst <- as.numeric(pred)
 
 
-## 3B: nodematch("age.grp") ##
+## 3B: nodematch("age.grp", diff = TRUE) ##
 
-age.breaks <- c(0, 24, 34, 44, 54, 64, 100)
 linst$index.age.grp <- cut(linst$age, age.breaks, labels = FALSE)
 linst$part.age.grp <- cut(as.numeric(linst$p_age_imp), age.breaks, labels = FALSE)
 data.frame(linst$age, linst$index.age.grp, linst$p_age_imp, linst$part.age.grp)
@@ -592,10 +629,22 @@ mod <- glm(same.age.grp ~ city2 + index.age.grp,
            data = linst, family = binomial())
 summary(mod)
 
-dat <- data.frame(city2 = city_name, index.age.grp = 1:5)
+dat <- data.frame(city2 = city_name, index.age.grp = 1:3)
 pred <- predict(mod, newdata = dat, type = "response")
 
 out$inst$nm.age.grp <- as.numeric(pred)
+
+
+## 3Bb: nodematch("age.grp", diff = FALSE) ##
+
+mod <- glm(same.age.grp ~ city2,
+           data = linst, family = binomial())
+summary(mod)
+
+dat <- data.frame(city2 = city_name)
+pred <- predict(mod, newdata = dat, type = "response")
+
+out$inst$nm.age.grp_diffF <- as.numeric(pred)
 
 
 ## 3C: nodefactor("age.grp") ##
@@ -606,7 +655,7 @@ mod <- glm(count.oo.part ~ city2 + age.grp + sqrt(age.grp),
            data = d, family = poisson())
 summary(mod)
 
-dat <- data.frame(city2 = city_name, age.grp = 1:5)
+dat <- data.frame(city2 = city_name, age.grp = 1:3)
 pred <- predict(mod, newdata = dat, type = "response")/52
 
 out$inst$nf.age.grp <- as.numeric(pred)
@@ -753,5 +802,5 @@ out$all$role.type <- prop.table(table(roletype))
 
 # SAVE --------------------------------------------------------------------
 
-fn <- paste("data/artnet.NetParam", gsub(" ", "", city_name), "rda", sep = ".")
+fn <- paste("ARTnetWorkflow/data/artnet.NetParam", gsub(" ", "", city_name), "rda", sep = ".")
 saveRDS(out, file = fn)

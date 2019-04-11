@@ -1,6 +1,6 @@
 
 ##
-## Epidemic parameters analysis for ARTnet Data
+## 01 - Epidemic parameters for ARTnet-RADAR Models
 ##
 
 ## Packages ##
@@ -238,7 +238,7 @@ pred.cond
 
 d1 <- select(d, race.cat3, cityYN, age, hiv2)
 
-hiv.mod <- glm(hiv2 ~ age + cityYN + as.factor(race.cat3) + cityYN*as.factor(race.cat3), 
+hiv.mod <- glm(hiv2 ~ age + cityYN + as.factor(race.cat3) + cityYN*as.factor(race.cat3),
                data = d1, family = binomial())
 summary(hiv.mod)
 x <- expand.grid(age = 15:65, race.cat3 = 0:2, cityYN = 0:1)
