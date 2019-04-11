@@ -18,3 +18,6 @@ remotes::install_github(c("statnet/EpiModel",
                           "statnet/EpiModelHPC",
                           "statnet/tergmLite",
                           "EpiModel/EpiABC"))
+
+# get ARTnet Data
+remotes::install_github("EpiModel/ARTnetData")
