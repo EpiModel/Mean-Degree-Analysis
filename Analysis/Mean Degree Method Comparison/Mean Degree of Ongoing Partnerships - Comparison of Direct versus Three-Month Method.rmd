@@ -1,7 +1,22 @@
 ---
 title: | 
  | Mean Degree of Ongoing Partnerships-
- | Direct versus Three-Month Method
+ | Day-of-Survey versus Three-Month Offset Method
+header-includes:
+- \usepackage{booktabs}
+- \usepackage{longtable}
+- \usepackage{array}
+- \usepackage{multirow}
+- \usepackage{wrapfig}
+- \usepackage{float}
+- \usepackage{colortbl}
+- \usepackage{pdflscape}
+- \usepackage{tabu}
+- \usepackage{threeparttable}
+- \usepackage{threeparttablex}
+- \usepackage[normalem]{ulem}
+- \usepackage{makecell}
+- \usepackage{xcolor}
 output:
   pdf_document: default
   html_document: default
@@ -31,23 +46,26 @@ The survey follows up with a question asking about the number of active, ongoing
 sexual partnerships at the time of the survey among all partnerships that have occurred in the past 12 months:
 
 > Next, think of all the men who you are in an active, ongoing sexual relationship 
-> with. By that, we mean that you generally have oral or anal sex at least once per > month and you expect to continue doing so for some time. How many of your 
+> with. By that, we mean that you generally have oral or anal sex at least once per 
+> month and you expect to continue doing so for some time. How many of your 
 > partnerships in the past twelve months are active and ongoing?
 
 As discussed in the description, mean degree can then be directly calculated from the responses to the above questions. 
-I will refer to this as the **direct method**.
+I will refer to this as the **day-of-survey method**.
 
-Below is the code to calculate mean degree by partnership type - casual or main - using the direct method from the ART-net long and wide datasets. Note that the granularity of the ART-net long dataset is the individual partnerships whereas the granularity of the ART-net wide dataset is the surveyed individual. First, the number of ongoing partnerships per individual is assessed using the long dataset. Then, mean degree is calculated by summing ongoing partnerships by surveyed individual and dividing by total surveyed individuals using the wide dataset.
+\newpage
+Below is the code to calculate mean degree by partnership type - casual or main - using the day of survey method from the ART-net long and wide datasets. Note that the granularity of the ART-net long dataset is the individual partnerships whereas the granularity of the ART-net wide dataset is the surveyed individual. First, the number of ongoing partnerships per individual is assessed using the long dataset. Then, mean degree is calculated by summing ongoing partnerships by surveyed individual and dividing by total surveyed individuals using the wide dataset.
 
 ```{r load, include=FALSE}
 library(ARTnetData)
 library(dplyr)
 library(knitr)
+options(kableExtra.latex.load_packages = FALSE)
 library(kableExtra)
-setwd("~/EpiModel Lab/Mean Degree Method Comparison")
+setwd("~/EpiModel Lab/ARTnet RADAR Mean Degree Comparison/ARTnet-RADAR/Analysis/Mean Degree Method Comparison")
 ```
 
-```{r direct, warning=FALSE}
+```{r dos, warning=FALSE}
 ARTnet.long$ONGOING <- as.numeric(ARTnet.long$ONGOING)
 ARTnet.long$ongoing2 <- ifelse(is.na(ARTnet.long$ONGOING), 0, ARTnet.long$ONGOING)
 
@@ -55,40 +73,44 @@ ARTnet.wide <- ARTnet.long %>%
   filter(RAI == 1 | IAI == 1) %>%
   filter(ptype == 1) %>%
   group_by(AMIS_ID) %>%
-  summarise(deg.main.direct = sum(ongoing2)) %>%
+  summarise(deg.main.dos = sum(ongoing2)) %>%
   right_join(ARTnet.wide, by = "AMIS_ID")
 
 ARTnet.wide <- ARTnet.long %>%
   filter(RAI == 1 | IAI == 1) %>%
   filter(ptype == 2) %>%
   group_by(AMIS_ID) %>%
-  summarise(deg.casl.direct = sum(ongoing2)) %>%
+  summarise(deg.casl.dos = sum(ongoing2)) %>%
   right_join(ARTnet.wide, by = "AMIS_ID")
 
-ARTnet.wide$deg.main.direct <- ifelse(is.na(ARTnet.wide$deg.main.direct), 0, ARTnet.wide$deg.main.direct)
-ARTnet.wide$deg.casl.direct <- ifelse(is.na(ARTnet.wide$deg.casl.direct), 0, ARTnet.wide$deg.casl.direct)
+ARTnet.wide$deg.main.dos <- ifelse(is.na(ARTnet.wide$deg.main.dos), 
+                                   0, ARTnet.wide$deg.main.dos)
+ARTnet.wide$deg.casl.dos <- ifelse(is.na(ARTnet.wide$deg.casl.dos), 
+                                   0, ARTnet.wide$deg.casl.dos)
 
-mean.deg.main.direct <- mean(ARTnet.wide$deg.main.direct)
-mean.deg.casl.direct <- mean(ARTnet.wide$deg.casl.direct)
+mean.deg.main.dos <- mean(ARTnet.wide$deg.main.dos)
+mean.deg.casl.dos <- mean(ARTnet.wide$deg.casl.dos)
 ```
 
-```{r direct_results, echo=FALSE}
-cat("Using the direct method, the mean degree of main partnerships among individuals in the ART-net\n dataset is: ", round(mean.deg.main.direct,4))
+```{r dos_results, echo=FALSE}
+cat("Using the day-of-survey method, the mean degree of main partnerships\n among individuals in the ART-net dataset is: ", round(mean.deg.main.dos,4))
 
-cat("Using the direct method, the mean degree of casual partnerships among individuals in the ART-net\n dataset is: ", round(mean.deg.casl.direct,4))
+cat("Using the day-of-survey method, the mean degree of casual partnerships\n among individuals in the ART-net dataset is: ", round(mean.deg.casl.dos,4))
 ```
 
-In contrast, an alternate approach referred to as the **three-month method**, for deriving active and ongoing partnerships may also be used in the instance where individuals are not explicitly asked about number of active and ongoing partners at the time of the survey. 
+\newpage
+In contrast, an alternate approach referred to as the **three-month offset method**, for deriving active and ongoing partnerships may also be used in the instance where individuals are not explicitly asked about number of active and ongoing partners at the time of the survey. 
 
-The three-month method starts by taking a three-month offset of the survey date. For example, if an individual was surveyed July 15th 2019, then their three-month offset would be April 15th 2019. Once this offset is established for all surveyed individuals, each individual partership is assessed to determine if the three-month offset falls between the start and end date of the partnership. If the three-month offset falls between the partership start and end date, then the partnership is considered "ongoing"; otherwise, it is not considered ongoing.
+The three-month offset method starts by taking a three-month offset of the survey date. For example, if an individual was surveyed July 15th 2019, then their three-month offset would be April 15th 2019. Once this offset is established for all surveyed individuals, each individual partership is assessed to determine if the three-month offset falls between the start and end date of the partnership. If the three-month offset falls between the partership start and end date, then the partnership is considered active and ongoing; otherwise, it is not considered active and ongoing.
 
-![Three-Month Method Data Scenario](Mean Degree of Ongoing Partnerships - Three-Month Method Data Scenario.png)
-
-Similar code to the block above calculating mean degree using the direct method is used to calculate mean degree assessing ongoing partnerships using this three-month method.
+![Three-Month Offset Method Data Scenario](Mean Degree of Ongoing Partnerships - Three-Month Offset Method Data Scenario.png)
+\newpage
+Similar code to the block above calculating mean degree using the day-of-survey method is used to calculate mean degree assessing ongoing partnerships using this three-month offset method.
 
 ```{r three_month, warning=FALSE}
-prior.month.of.evaluation <- 12
-ARTnet.long$ongoing.evaluation.date <- ARTnet.long$SUB_DATE - round(prior.month.of.evaluation*30.44)
+prior.month.of.evaluation <- 3
+ARTnet.long$ongoing.evaluation.date <- ARTnet.long$SUB_DATE - 
+  round(prior.month.of.evaluation*30.44)
 ARTnet.long$ongoing3 <- ifelse(ARTnet.long$start.date <
                                  ARTnet.long$ongoing.evaluation.date &
                                  ARTnet.long$end.date >
@@ -108,37 +130,40 @@ ARTnet.wide <- ARTnet.long %>%
   summarise(deg.casl.three.month = sum(ongoing3)) %>%
   right_join(ARTnet.wide, by = "AMIS_ID")
 
-ARTnet.wide$deg.main.three.month <- ifelse(is.na(ARTnet.wide$deg.main.three.month), 0, ARTnet.wide$deg.main.three.month)
-ARTnet.wide$deg.casl.three.month <- ifelse(is.na(ARTnet.wide$deg.casl.three.month), 0, ARTnet.wide$deg.casl.three.month)
+ARTnet.wide$deg.main.three.month <- ifelse(is.na(ARTnet.wide$deg.main.three.month), 
+                                           0, ARTnet.wide$deg.main.three.month)
+ARTnet.wide$deg.casl.three.month <- ifelse(is.na(ARTnet.wide$deg.casl.three.month), 
+                                           0, ARTnet.wide$deg.casl.three.month)
 
 mean.deg.main.three.month <- mean(ARTnet.wide$deg.main.three.month)
 mean.deg.casl.three.month <- mean(ARTnet.wide$deg.casl.three.month)
 ```
 
 ```{r three_month_results, echo=FALSE}
-cat("Using the three-month method, the mean degree of main partnerships among individuals in the ART-net\n dataset is: ", round(mean.deg.main.three.month,4))
+cat("Using the three-month offset method, the mean degree of main partnerships among\n individuals in the ART-net dataset is: ", round(mean.deg.main.three.month,4))
 
-cat("Using the three-month method, the mean degree of casual partnerships among individuals in the ART-net\n dataset is: ", round(mean.deg.casl.three.month,4))
+cat("Using the three-month offset method, the mean degree of casual partnerships among\n individuals in the ART-net dataset is: ", round(mean.deg.casl.three.month,4))
 ```
 
-Here are the results comparing mean degree by partnership type (main or casual) and method of determining ongoing partnerships (direct or three-month) in table form:
+\newpage
+Here are the results comparing mean degree by partnership type (main or casual) and method of determining ongoing partnerships (day-of-survey or three-month offset) in table form:
 
 ```{r comparison, warning=FALSE, include=FALSE}
 
 Partnership.Type <- rbind(c("Main"),c("Casual"))
 
 mean.degree.main <- ARTnet.wide %>%
-  summarize(mean.deg.main.direct = round(mean(ARTnet.wide$deg.main.direct),4),
+  summarize(mean.deg.main.dos = round(mean(ARTnet.wide$deg.main.dos),4),
             mean.deg.main.three.month = round(mean(ARTnet.wide$deg.main.three.month),4))
-colnames(mean.degree.main) <- c("Direct", "Three.Month")
+colnames(mean.degree.main) <- c("Day-of-Survey", "Three-Month")
 
 mean.degree.casl <- ARTnet.wide %>%
-  summarize(mean.deg.casl.direct = round(mean(ARTnet.wide$deg.casl.direct),4),
+  summarize(mean.deg.casl.dos = round(mean(ARTnet.wide$deg.casl.dos),4),
             mean.deg.casl.three.month = round(mean(ARTnet.wide$deg.casl.three.month),4))
-colnames(mean.degree.casl) <- c("Direct", "Three.Month")
+colnames(mean.degree.casl) <- c("Day-of-Survey", "Three-Month")
 
 mean.degree.df <- data.frame(matrix(ncol = 2, nrow = 0))
-colnames(mean.degree.df) <- c("Direct", "Three.Month")
+colnames(mean.degree.df) <- c("Day-of-Survey", "Three-Month")
 
 mean.degree.df <- rbind(mean.degree.df, mean.degree.main, mean.degree.casl)
 
@@ -148,15 +173,16 @@ mean.degree.df
 
 ```{r comparison_final, warning=FALSE, echo=FALSE}
 mean.degree.df.final <- data.frame(matrix(ncol = 3, nrow = 0))
-colnames(mean.degree.df.final) <- c("Type","Direct","Three.Month")
+colnames(mean.degree.df.final) <- c("Type","Day-of-Survey","Three.Month")
 
 mean.degree.df.final <- cbind(Partnership.Type, mean.degree.df)
 
-mean.degree.df.final
+kable(mean.degree.df.final) %>%
+  kable_styling(bootstrap_options = "striped", font_size = 12)
 
 ```
 
-The mean degree by partnership type calculated using the direct and three-month methods are similar.
+The mean degree by partnership type calculated using the day-of-survey and three-month offset methods are similar.
 
 Next, instead of assessing ongoing partnerships using a three-month offset, we can generalize our approach to look at n-month offsets for user specified values of n.
 
@@ -164,10 +190,11 @@ For the purpose of this example, we assessed ongoing partnerships with one- to t
 
 The pairs of plots below show how mean degree changes depending on number of months of offset used for determination of whether or not a partnership is ongoing. The plots show the same data, with the second pair of plots showing the results at larger scale.
 
-The data may also be viewed in the table directly below the pair of plots.
+The data may also be viewed in the table below the pair of plots.
 
+\newpage
 ```{r generalized_month_offset, include=FALSE}
-##N-Month Method
+##N-Month Offset Method
 
 # Specify start and end months for offsets
 # Note: Only single month steps are supported
@@ -235,54 +262,67 @@ for (i in start_month_offset:end_month_offset) {
 }
 ```
 
-```{r plots_tables, fig.align='center', echo=FALSE}
+```{r plots_tables, fig.align='center', fig.height=8, echo=FALSE}
 # RESULTS
 
-par(mfrow=c(1,2))
+par(mfrow=c(2,2))
 
-plot(month, mean.degree.main, main = "Mean Degree of Main Partnerships \nN-Month Method - Points, Direct Method - Line",
-     xlab = "Number of Offset Months of Survey Date \nN-Month Method",
-     ylab = "Mean Degree - Main Partnerships",
+plot(month, mean.degree.main, 
+     main = "\n\n\nMain Partnerships",
+     xlab = "Number of Offset Months",
+     ylab = "Mean Degree",
      ylim = c(0,1),
      cex.main = 0.8)
-abline(h=mean.deg.main.direct, col="blue")
-text(0.6*(end_month_offset - start_month_offset),
-     1.15*mean.deg.main.direct,
-     paste("Mean Degree - Direct Method = ",round(mean.deg.main.direct,4),sep=""),
-     cex = .75)
+abline(h=mean.deg.main.dos, col="blue")
+text(0.45*(end_month_offset - start_month_offset),
+     1.12*mean.deg.main.dos,
+     paste("Mean Degree:\nDay-of-Survey Method = ",round(mean.deg.main.dos,4),sep=""),
+     cex = 0.5,
+     adj = 0)
 
-plot(month, mean.degree.casual, main = "Mean Degree of Casual Partnerships \nN-Month Method - Points, Direct Method - Line",
-     xlab = "Number of Offset Months of Survey Date \nN-Month Method",
-     ylab = "Mean Degree - Casual Partnerships",
+plot(month, mean.degree.casual, 
+     main = "\n\n\nCasual Partnerships", 
+     xlab = "Number of Offset Months",
+     ylab = "Mean Degree",
      ylim = c(0,1),
      cex.main = 0.8)
-lines(mean.deg.casl.direct)
-abline(h=mean.deg.casl.direct, col="purple")
-text(0.6*(end_month_offset - start_month_offset),
-     1.15*mean.deg.casl.direct,
-     paste("Mean Degree - Direct Method = ",round(mean.deg.casl.direct,4),sep=""),
-     cex = .75)
+lines(mean.deg.casl.dos)
+abline(h=mean.deg.casl.dos, col="purple")
+text(0.45*(end_month_offset - start_month_offset),
+     1.1*mean.deg.casl.dos,
+     paste("Mean Degree:\nDay-of-Survey Method = ",round(mean.deg.casl.dos,4),sep=""),
+     cex = 0.5,
+     adj = 0)
+mtext("Partnership Mean Degree", side = 3, line = -1, outer = TRUE, font = 2)
+mtext("N-Month Offset Method - Points, Day-of-Survey Method - Line", side = 3, line = -2, outer = TRUE, font = 2, cex = 0.75)
 
-plot(month, mean.degree.main, main = "Mean Degree of Main Partnerships \nN-Month Method - Points, Direct Method - Line",
-     xlab = "Number of Offset Months of Survey Date \nN-Month Method",
-     ylab = "Mean Degree - Main Partnerships",
+plot(month, mean.degree.main, 
+     main = "Main Partnerships - Scaled",
+     xlab = "Number of Offset Months",
+     ylab = "Mean Degree",
      cex.main = 0.8)
-abline(h=mean.deg.main.direct, col="blue")
-text(0.6*(end_month_offset - start_month_offset),
-     0.99*mean.deg.main.direct,
-     paste("Mean Degree - Direct Method = ",round(mean.deg.main.direct,4),sep=""),
-     cex = .75)
+abline(h=mean.deg.main.dos, col="blue")
+text(0.3*(end_month_offset - start_month_offset),
+     0.99*mean.deg.main.dos,
+     paste("Mean Degree:\nDay-of-Survey Method = ",round(mean.deg.main.dos,4),sep=""),
+     cex = .5,
+     adj = 0)
 
-plot(month, mean.degree.casual, main = "Mean Degree of Casual Partnerships \nN-Month Method - Points, Direct Method - Line",
-     xlab = "Number of Offset Months of Survey Date \nN-Month Method",
-     ylab = "Mean Degree - Casual Partnerships",
+plot(month, mean.degree.casual, 
+     main = "Casual Partnerships - Scaled",
+     xlab = "Number of Offset Months",
+     ylab = "Mean Degree",
      cex.main = 0.8)
-lines(mean.deg.casl.direct)
-abline(h=mean.deg.casl.direct, col="purple")
-text(0.6*(end_month_offset - start_month_offset),
-     1.01*mean.deg.casl.direct,
-     paste("Mean Degree - Direct Method = ",round(mean.deg.casl.direct,4),sep=""),
-     cex = .75)
+lines(mean.deg.casl.dos)
+abline(h=mean.deg.casl.dos, col="purple")
+text(0.45*(end_month_offset - start_month_offset),
+     1.01*mean.deg.casl.dos,
+     paste("Mean Degree:\nDay-of-Survey Method = ",round(mean.deg.casl.dos,4),sep=""),
+     cex = .5,
+     adj = 0)
+
+par(xpd = TRUE)
+text(par("usr")[2] - 18,y=mean(par("usr")[3:4]) + 0,"test taxis label",srt=-270)
 
 #Mean degree - main
 mean.degree.main.df <- data.frame(n_month, round(mean.degree.main,4))
@@ -296,14 +336,12 @@ colnames(mean.degree.table) <- c("Month", "Main", "Casual")
 
 mean.degree.table <- setNames(data.frame(t(mean.degree.table[,-1])), mean.degree.table[,1])
 
-direct_ref_col <- rbind(c(round(mean.deg.main.direct,4)),c(round(mean.deg.casl.direct,4)))
-colnames(direct_ref_col) <- c("Direct")
+dos_ref_col <- rbind(c(round(mean.deg.main.dos,4)),c(round(mean.deg.casl.dos,4)))
+colnames(dos_ref_col) <- c("Day-of-Survey")
 
-mean.degree.table <- cbind(mean.degree.table, direct_ref_col)
+mean.degree.table <- cbind(dos_ref_col, mean.degree.table)
 
 kable(mean.degree.table) %>%
-  kable_styling(bootstrap_options = "striped", font_size = 12)
-
-
+  kable_styling(bootstrap_options = "striped", font_size = 6)
 
 ```
