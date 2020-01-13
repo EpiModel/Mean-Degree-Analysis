@@ -32,7 +32,7 @@ dx_main <- netdx(fit_main, nsims = 10, ncores = 6, nsteps = 500,
 print(dx_main)
 plot(dx_main)
 
-netstats$netstats_main
+netstats[[1]]
 
 
 # Casual ------------------------------------------------------------------
@@ -55,7 +55,7 @@ dx_casl <- netdx(fit_casl, nsims = 10, ncores = 6, nsteps = 500,
 print(dx_casl, digits = 1)
 plot(dx_casl)
 
-netstats$casl
+netstats[[2]]
 
 
 # One-Off -----------------------------------------------------------------
@@ -79,4 +79,4 @@ print(dx_inst, digits = 1)
 
 plot(dx_inst, sim.lines = TRUE, sim.lwd = 0.05)
 
-netstats$inst
+netstats[[3]]
