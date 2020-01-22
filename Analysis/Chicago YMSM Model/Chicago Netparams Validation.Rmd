@@ -9,14 +9,13 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-TO DO: 1. Hide output from code chunks, 2. How to create numbered lists
-
 ## Network Parameters by Partnership Type and Calculation Method for Young MSM (Aged 16-29) in Chicago
 
 In this document, three methods for calculating network parameters will be compared:
-1. ARTnet-RADAR Netparams Script
-2. ARTnet-RADAR Netparams Script - 3 Month Offset Method
-3. ARTnet Workflow Script
+
+1. ARTnet-RADAR Netparams Stand-alone Script - Day of Survey
+2. ARTnet-RADAR Netparams Stand-alone Script - 3 Month Offset Method
+3. ARTnet Workflow Script for Chicago YMSM
 
 The three above mentioned scripts may be found below.
 At the end of the document, the network parameter comparison from the script output is performed.
@@ -24,7 +23,7 @@ At the end of the document, the network parameter comparison from the script out
 
 ## 1. ARTnet-RADAR Netparams Script 
 
-```{r ARTnet-RADAR_Netparams_Script, eval=FALSE}
+```{r ARTnet-RADAR_Netparams_Script_DOS, eval=FALSE}
 
 #[Link to location on Github here... likely in ARTnet-RADAR repo]
 
@@ -835,59 +834,77 @@ out$all$role.type <- prop.table(table(roletype))
 
 
 
-###################################################33
+#####################################################
 
 ## OUTPUTS
 
 ## Mean Degree
 
 # Overall
-md.overall.main.ARTnet_script <- out$main$md.main
-md.overall.casl.ARTnet_script <- out$casl$md.casl
-md.overall.inst.ARTnet_script <- out$inst$md.inst
+md.overall.main.ARTnet_DOS_script <- out$main$md.main
+md.overall.casl.ARTnet_DOS_script <- out$casl$md.casl
+md.overall.inst.ARTnet_DOS_script <- out$inst$md.inst
 
 # By Age Group
-md.age.main.ARTnet_script <- out$main$nf.age.grp
-md.age.casl.ARTnet_script <- out$casl$nf.age.grp
-md.age.inst.ARTnet_script <- out$inst$nf.age.grp
+md.age.main.ARTnet_DOS_script <- out$main$nf.age.grp
+md.age.casl.ARTnet_DOS_script <- out$casl$nf.age.grp
+md.age.inst.ARTnet_DOS_script <- out$inst$nf.age.grp
 
 # By Race
-md.race.main.ARTnet_script <- out$main$nf.race
-md.race.casl.ARTnet_script <- out$casl$nf.race
-md.race.inst.ARTnet_script <- out$inst$nf.race
+md.race.main.ARTnet_DOS_script <- out$main$nf.race
+md.race.casl.ARTnet_DOS_script <- out$casl$nf.race
+md.race.inst.ARTnet_DOS_script <- out$inst$nf.race
 
 # By Diagnosed HIV Status
-md.HIV_status.main.ARTnet_script <- out$main$nf.diag.status
-md.HIV_status.casl.ARTnet_script <- out$casl$nf.diag.status
-md.HIV_status.inst.ARTnet_script <- out$inst$nf.diag.status
+md.HIV_status.main.ARTnet_DOS_script <- out$main$nf.diag.status
+md.HIV_status.casl.ARTnet_DOS_script <- out$casl$nf.diag.status
+md.HIV_status.inst.ARTnet_DOS_script <- out$inst$nf.diag.status
 
 # By Cross Partnership Degree
-md.casl_cross_deg.main.ARTnet_script <- out$main$nf.deg.casl
-md.main_cross_deg.casl.ARTnet_script <- out$casl$nf.deg.main
+md.casl_cross_deg.main.ARTnet_DOS_script <- out$main$nf.deg.casl
+md.main_cross_deg.casl.ARTnet_DOS_script <- out$casl$nf.deg.main
 
 
 ## Proportion Concurrent
-prop.concurrent.main.ARTnet_script <- out$main$concurrent
-prop.concurrent.casl.ARTnet_script <- out$casl$concurrent
-prop.concurrent.inst.ARTnet_script <- out$inst$concurrent
+prop.concurrent.main.ARTnet_DOS_script <- out$main$concurrent
+prop.concurrent.casl.ARTnet_DOS_script <- out$casl$concurrent
 
 
 ## Mixing
 
 # By Age - Overall
-mixing.age.overall.main.ARTnet_script <- out$main$nm.age.grp_diffF
-mixing.age.overall.casl.ARTnet_script <- out$casl$nm.age.grp_diffF
-mixing.age.overall.inst.ARTnet_script <- out$inst$nm.age.grp_diffF
+mixing.age.overall.main.ARTnet_DOS_script <- out$main$nm.age.grp_diffF
+mixing.age.overall.casl.ARTnet_DOS_script <- out$casl$nm.age.grp_diffF
+mixing.age.overall.inst.ARTnet_DOS_script <- out$inst$nm.age.grp_diffF
 
 # By Age - Within Age Group
-mixing.age.within_group.main.ARTnet_script <- out$main$nm.age.grp
-mixing.age.within_group.casl.ARTnet_script <- out$casl$nm.age.grp
-mixing.age.within_group.inst.ARTnet_script <- out$inst$nm.age.grp
+mixing.age.within_group.main.ARTnet_DOS_script <- out$main$nm.age.grp
+mixing.age.within_group.casl.ARTnet_DOS_script <- out$casl$nm.age.grp
+mixing.age.within_group.inst.ARTnet_DOS_script <- out$inst$nm.age.grp
 
-# By Race
-mixing.age.overall.main.ARTnet_script <- out$main$nm.age.grp_diffF
-mixing.age.overall.casl.ARTnet_script <- out$casl$nm.age.grp_diffF
-mixing.age.overall.inst.ARTnet_script <- out$inst$nm.age.grp_diffF
+# By Race - Overall
+mixing.race.overall.main.ARTnet_DOS_script <- out$main$nm.race_diffF
+mixing.race.overall.casl.ARTnet_DOS_script <- out$casl$nm.race_diffF
+mixing.race.overall.inst.ARTnet_DOS_script <- out$inst$nm.race_diffF
+
+# By Race - Within Race Group
+mixing.race.within_group.main.ARTnet_DOS_script <- out$main$nm.race
+mixing.race.within_group.casl.ARTnet_DOS_script <- out$casl$nm.race
+mixing.race.within_group.inst.ARTnet_DOS_script <- out$inst$nm.race
+
+
+## Mean Duration
+duration.main.ARTnet_DOS_script <- durs.main.all$mean.dur.adj
+duration.casl.ARTnet_DOS_script <- durs.casl.all$mean.dur.adj
+
+
+## One-Time Partner Rates 
+
+# By Main+Casual Degree
+OTP.rates.by.degree.ARTnet_DOS_script <- out$inst$nf.deg.tot
+
+# By Risk Quintile
+OTP.rates.by.risk.ARTnet_DOS_script <- out$inst$nf.risk.grp
 
 
 ```
@@ -1709,6 +1726,79 @@ out$all$role.type <- prop.table(table(roletype))
  
 # fn <- paste("ARTnetWorkflow/data/artnet.NetParam", gsub(" ", "", city_name), "rda", sep = ".")
 # saveRDS(out, file = fn)
+
+#####################################################
+
+## OUTPUTS
+
+## Mean Degree
+
+# Overall
+md.overall.main.ARTnet_3MO_script <- out$main$md.main
+md.overall.casl.ARTnet_3MO_script <- out$casl$md.casl
+md.overall.inst.ARTnet_3MO_script <- out$inst$md.inst
+
+# By Age Group
+md.age.main.ARTnet_3MO_script <- out$main$nf.age.grp
+md.age.casl.ARTnet_3MO_script <- out$casl$nf.age.grp
+md.age.inst.ARTnet_3MO_script <- out$inst$nf.age.grp
+
+# By Race
+md.race.main.ARTnet_3MO_script <- out$main$nf.race
+md.race.casl.ARTnet_3MO_script <- out$casl$nf.race
+md.race.inst.ARTnet_3MO_script <- out$inst$nf.race
+
+# By Diagnosed HIV Status
+md.HIV_status.main.ARTnet_3MO_script <- out$main$nf.diag.status
+md.HIV_status.casl.ARTnet_3MO_script <- out$casl$nf.diag.status
+md.HIV_status.inst.ARTnet_3MO_script <- out$inst$nf.diag.status
+
+# By Cross Partnership Degree
+md.casl_cross_deg.main.ARTnet_3MO_script <- out$main$nf.deg.casl
+md.main_cross_deg.casl.ARTnet_3MO_script <- out$casl$nf.deg.main
+
+
+## Proportion Concurrent
+prop.concurrent.main.ARTnet_3MO_script <- out$main$concurrent
+prop.concurrent.casl.ARTnet_3MO_script <- out$casl$concurrent
+
+
+## Mixing
+
+# By Age - Overall
+mixing.age.overall.main.ARTnet_3MO_script <- out$main$nm.age.grp_diffF
+mixing.age.overall.casl.ARTnet_3MO_script <- out$casl$nm.age.grp_diffF
+mixing.age.overall.inst.ARTnet_3MO_script <- out$inst$nm.age.grp_diffF
+
+# By Age - Within Age Group
+mixing.age.within_group.main.ARTnet_3MO_script <- out$main$nm.age.grp
+mixing.age.within_group.casl.ARTnet_3MO_script <- out$casl$nm.age.grp
+mixing.age.within_group.inst.ARTnet_3MO_script <- out$inst$nm.age.grp
+
+# By Race - Overall
+mixing.race.overall.main.ARTnet_3MO_script <- out$main$nm.race_diffF
+mixing.race.overall.casl.ARTnet_3MO_script <- out$casl$nm.race_diffF
+mixing.race.overall.inst.ARTnet_3MO_script <- out$inst$nm.race_diffF
+
+# By Race - Within Race Group
+mixing.race.within_group.main.ARTnet_3MO_script <- out$main$nm.race
+mixing.race.within_group.casl.ARTnet_3MO_script <- out$casl$nm.race
+mixing.race.within_group.inst.ARTnet_3MO_script <- out$inst$nm.race
+
+
+## Mean Duration
+duration.main.ARTnet_3MO_script <- durs.main.all$mean.dur.adj
+duration.casl.ARTnet_3MO_script <- durs.casl.all$mean.dur.adj
+
+
+## One-Time Partner Rates 
+
+# By Main+Casual Degree
+OTP.rates.by.degree.ARTnet_3MO_script <- out$inst$nf.deg.tot
+
+# By Risk Quintile
+OTP.rates.by.risk.ARTnet_3MO_script <- out$inst$nf.risk.grp
+
 ```
 
 ## 3. ARTnet Workflow Script
@@ -1745,13 +1835,13 @@ nw_main <- nw_casl <- nw_inst <- nw
 #Formula:
 model_main <- ~edges +
   nodematch("age.grp", diff = TRUE) +
-  nodefactor("age.grp", base = 1) +
+  nodefactor("age.grp", levels = -1) +
   nodematch("race", diff = FALSE) + #race = TRUE; omit if FALSE
-  nodefactor("race", base = 1) +
-  nodefactor("deg.casl", base = 1) +
+  nodefactor("race", levels = -1) +
+  nodefactor("deg.casl", levels = -1) +
   concurrent +
   degrange(from = 3) +
-  nodematch("role.class", diff = TRUE, keep = 1:2
+  nodematch("role.class", diff = TRUE, levels = 1:2
   )
 
 # Target Stats
@@ -1784,14 +1874,14 @@ fit_main <- netest(nw_main,
 # Formula
 model_casl <- ~edges +
   nodematch("age.grp", diff = TRUE) +
-  nodefactor("age.grp", base = c(1,5)) +
-  nodefactor("deg.main", base = 3) +
+  nodefactor("age.grp", levels = -c(1,5)) +
+  nodefactor("deg.main", levels = -3) +
   concurrent +
   degrange(from = 4) +
-  nodematch("role.class", diff = TRUE, keep = 1:2) +
+  nodematch("role.class", diff = TRUE, levels = 1:2) +
   #If race = TRUE:
   nodematch("race", diff = FALSE) +
-  nodefactor("race", base = 1)
+  nodefactor("race", levels = -1)
 
 # Target Stats
 netstats_casl <- c(
@@ -1824,13 +1914,13 @@ fit_casl <- netest(nw_casl,
 # Formula
 model_inst <- ~edges +
   nodematch("age.grp", diff = FALSE) +
-  nodefactor("age.grp", base = 1) +
-  nodefactor("risk.grp", base = 5) +
-  nodefactor("deg.tot", base = 1) +
-  nodematch("role.class", diff = TRUE, keep = 1:2) +
+  nodefactor("age.grp", levels = -1) +
+  nodefactor("risk.grp", levels = -5) +
+  nodefactor("deg.tot", levels = -1) +
+  nodematch("role.class", diff = TRUE, levels = 1:2) +
   #If race = TRUE
   nodematch("race", diff = FALSE) +
-  nodefactor("race", base = 1)
+  nodefactor("race", levels = -1)
 
 # Target Stats
 netstats_inst <- c(
@@ -1857,12 +1947,86 @@ fit_inst <- netest(nw_inst,
                                                    SAN.nsteps.times = 3),
                    verbose = FALSE)
 
-# # 8. Save Data
-# 
+# 8. Save Data
+
 # out <- list(fit_main, fit_casl, fit_inst)
-# 
 # saveRDS(out, file = "netest.rda")
+# 
+# out2 <- list(netstats_main, netstats_casl, netstats_inst)
+# saveRDS(out2, file = "netstats.rda")
+
+
+#####################################################
+
+## OUTPUTS
+
+## Mean Degree
+
+# Overall
+md.overall.main.ARTnet_workflow_script <- netparams$main$md.main
+md.overall.casl.ARTnet_workflow_script <- netparams$casl$md.casl
+md.overall.inst.ARTnet_workflow_script <- netparams$inst$md.inst
+
+# By Age Group
+md.age.main.ARTnet_workflow_script <- netparams$main$nf.age.grp
+md.age.casl.ARTnet_workflow_script <- netparams$casl$nf.age.grp
+md.age.inst.ARTnet_workflow_script <- netparams$inst$nf.age.grp
+
+# By Race
+md.race.main.ARTnet_workflow_script <- netparams$main$nf.race
+md.race.casl.ARTnet_workflow_script <- netparams$casl$nf.race
+md.race.inst.ARTnet_workflow_script <- netparams$inst$nf.race
+
+# By Diagnosed HIV Status
+md.HIV_status.main.ARTnet_workflow_script <- netparams$main$nf.diag.status
+md.HIV_status.casl.ARTnet_workflow_script <- netparams$casl$nf.diag.status
+md.HIV_status.inst.ARTnet_workflow_script <- netparams$inst$nf.diag.status
+
+# By Cross Partnership Degree
+md.casl_cross_deg.main.ARTnet_workflow_script <- netparams$main$nf.deg.casl
+md.main_cross_deg.casl.ARTnet_workflow_script <- netparams$casl$nf.deg.main
+
+
+## Proportion Concurrent
+prop.concurrent.main.ARTnet_workflow_script <- netparams$main$concurrent
+prop.concurrent.casl.ARTnet_workflow_script <- netparams$casl$concurrent
+
+
+## Mixing
+
+# By Age - Overall
+# Note: These terms are not output by netparams
+# mixing.age.overall.main.ARTnet_workflow_script <- netparams$main$nm.age.grp_diffF
+# mixing.age.overall.casl.ARTnet_workflow_script <- netparams$casl$nm.age.grp_diffF
+# mixing.age.overall.inst.ARTnet_workflow_script <- netparams$inst$nm.age.grp_diffF
+
+# By Age - Within Age Group
+mixing.age.within_group.main.ARTnet_workflow_script <- netparams$main$nm.age.grp
+mixing.age.within_group.casl.ARTnet_workflow_script <- netparams$casl$nm.age.grp
+mixing.age.within_group.inst.ARTnet_workflow_script <- netparams$inst$nm.age.grp
+
+# By Race - Overall
+mixing.race.overall.main.ARTnet_workflow_script <- netparams$main$nm.race_diffF
+mixing.race.overall.casl.ARTnet_workflow_script <- netparams$casl$nm.race_diffF
+mixing.race.overall.inst.ARTnet_workflow_script <- netparams$inst$nm.race_diffF
+
+# By Race - Within Race Group
+mixing.race.within_group.main.ARTnet_workflow_script <- netparams$main$nm.race
+mixing.race.within_group.casl.ARTnet_workflow_script <- netparams$casl$nm.race
+mixing.race.within_group.inst.ARTnet_workflow_script <- netparams$inst$nm.race
+
+
+## Mean Duration
+duration.main.ARTnet_workflow_script <- netparams$main$durs.main.byage$mean.dur.adj
+duration.casl.ARTnet_workflow_script <- netparams$casl$durs.casl.byage$mean.dur.adj
+
+
+## One-Time Partner Rates
+
+# By Main+Casual Degree
+OTP.rates.by.degree.ARTnet_workflow_script <- netparams$inst$nf.deg.tot
+
+# By Risk Quintile
+OTP.rates.by.risk.ARTnet_workflow_script <- netparams$inst$nf.risk.grp
 
 ```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

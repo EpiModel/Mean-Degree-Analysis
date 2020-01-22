@@ -144,5 +144,7 @@ fit_inst <- netest(nw_inst,
 # 8. Save Data
 
 out <- list(fit_main, fit_casl, fit_inst)
-
 saveRDS(out, file = "netest.rda")
+
+out2 <- list(netstats_main, netstats_casl, netstats_inst)
+saveRDS(out2, file = "netstats.rda")

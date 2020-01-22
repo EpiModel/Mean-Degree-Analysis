@@ -76,7 +76,7 @@ dx_inst <- netdx(fit_inst, nsims = 10000, dynamic = FALSE,
                  set.control.ergm = control.simulate.ergm(MCMC.burnin = 1e5))
 
 print(dx_inst, digits = 1)
-
+plot(dx_inst)
 plot(dx_inst, sim.lines = TRUE, sim.lwd = 0.05)
 
 netstats[[3]]
