@@ -1,40 +1,74 @@
 ---
-title: "Network Parameters Comparison - Young Chicago MSM"
-author: "Connor Van Meter"
-date: "January 7, 2020"
-output: html_document
+title: | 
+ | Mean Degree of Ongoing Partnerships-
+ | Day-of-Survey versus Three-Month Offset Method
+header-includes:
+- \usepackage{booktabs}
+- \usepackage{longtable}
+- \usepackage{array}
+- \usepackage{multirow}
+- \usepackage{wrapfig}
+- \usepackage{float}
+- \usepackage{colortbl}
+- \usepackage{pdflscape}
+- \usepackage{tabu}
+- \usepackage{threeparttable}
+- \usepackage{threeparttablex}
+- \usepackage[normalem]{ulem}
+- \usepackage{makecell}
+- \usepackage{xcolor}
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Network Parameters by Partnership Type and Calculation Method for Young MSM (Aged 16-29) in Chicago
+## Purpose
 
-In this document, three methods for calculating network parameters will be compared:
+To compare two methods of determining the mean degree of ongoing casual and main partnerships using response data from the ART-net study.
 
-1. ARTnet-RADAR Netparams Stand-alone Script - Day of Survey
-2. ARTnet-RADAR Netparams Stand-alone Script - 3 Month Offset Method
-3. ARTnet Workflow Script for Chicago YMSM
+## Description
 
-The three above mentioned scripts may be found below.
-At the end of the document, the network parameter comparison from the script output is performed.
+Mean degree is an important measure of network connectivity which represents the average number of edges connected to a node/vertex. In this context, mean degree represents the average number of concurrent ongoing partners of an individual enrolled in the ART-net study.
+The American Men's Internet Survey (AMIS), from which the ART-net study sources data, explicitly asks individuals about ongoing partnerships. Mean degree can be calculated through analysis of the responses to this question as a result. A similar question does not appear on the RADAR survey. As a result, alternate methods may be employed to estimate active and ongoing partnerships to derive the mean degree of individuals in the partnership network.
+ 
+## Methods and Results
 
+The ART-Net Survey asks study participants about the number of partners they have had in the past 12 months:
 
-## 1. ARTnet-RADAR Netparams Script 
+> In the past 12 months (since the same month last year), with how many different 
+> men have you had either oral or anal sex?
 
-```{r ARTnet-RADAR_Netparams_Script_DOS, eval=FALSE}
+The survey follows up with a question asking about the number of active, ongoing
+sexual partnerships at the time of the survey among all partnerships that have occurred in the past 12 months:
 
-#[Link to location on Github here... likely in ARTnet-RADAR repo]
+> Next, think of all the men who you are in an active, ongoing sexual relationship 
+> with. By that, we mean that you generally have oral or anal sex at least once per 
+> month and you expect to continue doing so for some time. How many of your 
+> partnerships in the past twelve months are active and ongoing?
 
+As discussed in the description, mean degree can then be directly calculated from the responses to the above questions. 
+I will refer to this as the **day-of-survey method**.
 
+\newpage
+Below is the code to calculate mean degree by partnership type - casual or main - using the day of survey method from the ART-net long and wide datasets. Note that the granularity of the ART-net long dataset is the individual partnerships whereas the granularity of the ART-net wide dataset is the surveyed individual. First, the number of ongoing partnerships per individual is assessed using the long dataset. Then, mean degree is calculated by summing ongoing partnerships by surveyed individual and dividing by total surveyed individuals using the wide dataset.
+
+```{r load, include=FALSE}
+library(knitr)
+options(kableExtra.latex.load_packages = FALSE)
+library(kableExtra)
+library("tidyverse")
+library("ARTnetData")
+setwd("~/EpiModel Lab/ARTnet RADAR Mean Degree Comparison/ARTnet-RADAR/Analysis/Mean Degree Method Comparison")
+```
+
+```{r dos, warning=FALSE, include=FALSE}
 ##
 ## 02 - Network parameter analysis for ARTnet-RADAR Model
 ##
-
-## Packages ##
-library("tidyverse")
-library("ARTnetData")
 
 ## Data ##
 d <- ARTnet.wide
@@ -183,12 +217,12 @@ nrow(d)
 
 ## Setup output list ##
 
-out <- list()
+out_dos <- list()
 
 
 # 1. Main model -----------------------------------------------------------
 
-out$main <- list()
+out_dos$main <- list()
 lmain <- l[l$ptype == 1, ]
 
 
@@ -201,7 +235,7 @@ summary(mod)
 dat <- data.frame(city2 = city_name)
 pred <- predict(mod, newdata = dat, type = "response")
 
-out$main$md.main <- as.numeric(pred)
+out_dos$main$md.main <- as.numeric(pred)
 
 
 ## 1B: nodematch("age.grp", diff = TRUE) ##
@@ -220,7 +254,7 @@ summary(mod)
 dat <- data.frame(city2 = city_name, index.age.grp = 1:3)
 pred <- predict(mod, newdata = dat, type = "response")
 
-out$main$nm.age.grp <- as.numeric(pred)
+out_dos$main$nm.age.grp <- as.numeric(pred)
 
 
 
@@ -234,7 +268,7 @@ summary(mod)
 dat <- data.frame(city2 = city_name)
 pred <- predict(mod, newdata = dat, type = "response")
 
-out$main$nm.age.grp_diffF <- as.numeric(pred)
+out_dos$main$nm.age.grp_diffF <- as.numeric(pred)
 
 
 
@@ -249,7 +283,7 @@ summary(mod)
 dat <- data.frame(city2 = city_name, age.grp = 1:3)
 pred <- predict(mod, newdata = dat, type = "response")
 
-out$main$nf.age.grp <- as.numeric(pred)
+out_dos$main$nf.age.grp <- as.numeric(pred)
 
 
 
@@ -268,7 +302,7 @@ summary(mod)
 dat <- data.frame(city2 = city_name, race.cat3 = 0:2)
 pred <- predict(mod, newdata = dat, type = "response")
 
-out$main$nm.race <- as.numeric(pred)
+out_dos$main$nm.race <- as.numeric(pred)
 
 
 ## 1Db: nodematch("race", diff = FALSE) ##
@@ -280,7 +314,7 @@ summary(mod)
 dat <- data.frame(city2 = city_name)
 pred <- predict(mod, newdata = dat, type = "response")
 
-out$main$nm.race_diffF <- as.numeric(pred)
+out_dos$main$nm.race_diffF <- as.numeric(pred)
 
 
 ## 1E: nodefactor("race") ##
@@ -292,7 +326,7 @@ summary(mod)
 dat <- data.frame(city2 = city_name, race.cat3 = 0:2)
 pred <- predict(mod, newdata = dat, type = "response")
 
-out$main$nf.race <- as.numeric(pred)
+out_dos$main$nf.race <- as.numeric(pred)
 
 
 
@@ -305,10 +339,10 @@ summary(mod)
 dat <- data.frame(city2 = city_name, deg.casl = sort(unique(d$deg.casl)))
 pred <- predict(mod, newdata = dat, type = "response")
 
-out$main$nf.deg.casl <- as.numeric(pred)
+out_dos$main$nf.deg.casl <- as.numeric(pred)
 
 deg.casl.dist <- prop.table(table(d$deg.casl[d$city2 == city_name]))
-out$main$deg.casl.dist <- as.numeric(deg.casl.dist)
+out_dos$main$deg.casl.dist <- as.numeric(deg.casl.dist)
 
 
 
@@ -321,7 +355,7 @@ summary(mod)
 dat <- data.frame(city2 = city_name)
 pred <- predict(mod, newdata = dat, type = "response")
 
-out$main$concurrent <- as.numeric(pred)
+out_dos$main$concurrent <- as.numeric(pred)
 
 
 ## 1H: nodefactor("diag.status") ##
@@ -333,7 +367,7 @@ summary(mod)
 dat <- data.frame(city2 = city_name, hiv2 = 0:1)
 pred <- predict(mod, newdata = dat, type = "response")
 
-out$main$nf.diag.status <- as.numeric(pred)
+out_dos$main$nf.diag.status <- as.numeric(pred)
 
 
 
@@ -367,7 +401,7 @@ durs.main$rates.main.adj <- 1 - (2^(-1/(wt*durs.main$median.dur)))
 
 # Mean duration associated with a geometric distribution that median:
 durs.main$mean.dur.adj <- 1/(1 - (2^(-1/(wt*durs.main$median.dur))))
-out$main$durs.main.homog <- durs.main
+out_dos$main$durs.main.homog <- durs.main
 
 # stratified by age
 
@@ -401,13 +435,13 @@ durs.main.all$rates.main.adj <- 1 - (2^(-1/(wt*durs.main.all$median.dur)))
 durs.main.all$mean.dur.adj <- 1/(1 - (2^(-1/(wt*durs.main.all$median.dur))))
 
 durs.main.all <- durs.main.all[, c(3, 1, 2, 4, 5)]
-out$main$durs.main.byage <- durs.main.all
+out_dos$main$durs.main.byage <- durs.main.all
 
 
 
 # 2. Casual model ---------------------------------------------------------
 
-out$casl <- list()
+out_dos$casl <- list()
 lcasl <- l[l$ptype == 2, ]
 
 
@@ -420,7 +454,7 @@ summary(mod)
 dat <- data.frame(city2 = city_name)
 pred <- predict(mod, newdata = dat, type = "response")
 
-out$casl$md.casl <- as.numeric(pred)
+out_dos$casl$md.casl <- as.numeric(pred)
 
 
 ## 2B: nodematch("age.grp", diff = TRUE) ##
@@ -438,7 +472,7 @@ summary(mod)
 dat <- data.frame(city2 = city_name, index.age.grp = 1:3)
 pred <- predict(mod, newdata = dat, type = "response")
 
-out$casl$nm.age.grp <- as.numeric(pred)
+out_dos$casl$nm.age.grp <- as.numeric(pred)
 
 # Consider adding absdiff within index.age.grp
 # group_by(lcasl, index.age.grp) %>%
@@ -456,7 +490,7 @@ summary(mod)
 dat <- data.frame(city2 = city_name)
 pred <- predict(mod, newdata = dat, type = "response")
 
-out$casl$nm.age.grp_diffF <- as.numeric(pred)
+out_dos$casl$nm.age.grp_diffF <- as.numeric(pred)
 
 
 ## 2C: nodefactor("age.grp") ##
@@ -470,7 +504,7 @@ summary(mod)
 dat <- data.frame(city2 = city_name, age.grp = 1:3)
 pred <- predict(mod, newdata = dat, type = "response")
 
-out$casl$nf.age.grp <- as.numeric(pred)
+out_dos$casl$nf.age.grp <- as.numeric(pred)
 
 
 ## 2D: nodematch("race") ##
@@ -486,7 +520,7 @@ summary(mod)
 dat <- data.frame(city2 = city_name, race.cat3 = 0:2)
 pred <- predict(mod, newdata = dat, type = "response")
 
-out$casl$nm.race <- as.numeric(pred)
+out_dos$casl$nm.race <- as.numeric(pred)
 
 
 ## 2Db: nodematch("race", diff = FALSE) ##
@@ -498,7 +532,7 @@ summary(mod)
 dat <- data.frame(city2 = city_name)
 pred <- predict(mod, newdata = dat, type = "response")
 
-out$casl$nm.race_diffF <- as.numeric(pred)
+out_dos$casl$nm.race_diffF <- as.numeric(pred)
 
 
 ## 2E: nodefactor("race", diff = TRUE) ##
@@ -510,7 +544,7 @@ summary(mod)
 dat <- data.frame(city2 = city_name, race.cat3 = 0:2)
 pred <- predict(mod, newdata = dat, type = "response")
 
-out$casl$nf.race <- as.numeric(pred)
+out_dos$casl$nf.race <- as.numeric(pred)
 
 
 ## 2F: nodefactor("deg.main") ##
@@ -522,10 +556,10 @@ summary(mod)
 dat <- data.frame(city2 = city_name, deg.main = 0:2)
 pred <- predict(mod, newdata = dat, type = "response")
 
-out$casl$nf.deg.main <- as.numeric(pred)
+out_dos$casl$nf.deg.main <- as.numeric(pred)
 
 deg.main.dist <- prop.table(table(d$deg.main[d$city2 == city_name]))
-out$casl$deg.main.dist <- as.numeric(deg.main.dist)
+out_dos$casl$deg.main.dist <- as.numeric(deg.main.dist)
 
 
 ## 2G: concurrent ##
@@ -537,7 +571,7 @@ summary(mod)
 dat <- data.frame(city2 = city_name)
 pred <- predict(mod, newdata = dat, type = "response")
 
-out$casl$concurrent <- as.numeric(pred)
+out_dos$casl$concurrent <- as.numeric(pred)
 
 
 ## 2H: nodefactor("diag.status") ##
@@ -549,7 +583,7 @@ summary(mod)
 dat <- data.frame(city2 = city_name, hiv2 = 0:1)
 pred <- predict(mod, newdata = dat, type = "response")
 
-out$casl$nf.diag.status <- as.numeric(pred)
+out_dos$casl$nf.diag.status <- as.numeric(pred)
 
 
 ## Durations ##
@@ -582,7 +616,7 @@ durs.casl$rates.casl.adj <- 1 - (2^(-1/(wt*durs.casl$median.dur)))
 
 # Mean duration associated with a geometric distribution that median:
 durs.casl$mean.dur.adj <- 1/(1 - (2^(-1/(wt*durs.casl$median.dur))))
-out$casl$durs.casl.homog <- durs.casl
+out_dos$casl$durs.casl.homog <- durs.casl
 
 # stratified by age
 
@@ -617,12 +651,12 @@ durs.casl.all$rates.casl.adj <- 1 - (2^(-1/(wt*durs.casl.all$median.dur)))
 durs.casl.all$mean.dur.adj <- 1/(1 - (2^(-1/(wt*durs.casl.all$median.dur))))
 
 durs.casl.all <- durs.casl.all[, c(3, 1, 2, 4, 5)]
-out$casl$durs.casl.byage <- durs.casl.all
+out_dos$casl$durs.casl.byage <- durs.casl.all
 
 
 # 3. One-off model --------------------------------------------------------
 
-out$inst <- list()
+out_dos$inst <- list()
 linst <- l[l$ptype == 3, ]
 
 ## 3A: edges ##
@@ -641,7 +675,7 @@ summary(mod)
 dat <- data.frame(city2 = city_name)
 pred <- predict(mod, newdata = dat, type = "response")/52
 
-out$inst$md.inst <- as.numeric(pred)
+out_dos$inst$md.inst <- as.numeric(pred)
 
 
 ## 3B: nodematch("age.grp", diff = TRUE) ##
@@ -659,7 +693,7 @@ summary(mod)
 dat <- data.frame(city2 = city_name, index.age.grp = 1:3)
 pred <- predict(mod, newdata = dat, type = "response")
 
-out$inst$nm.age.grp <- as.numeric(pred)
+out_dos$inst$nm.age.grp <- as.numeric(pred)
 
 
 ## 3Bb: nodematch("age.grp", diff = FALSE) ##
@@ -671,7 +705,7 @@ summary(mod)
 dat <- data.frame(city2 = city_name)
 pred <- predict(mod, newdata = dat, type = "response")
 
-out$inst$nm.age.grp_diffF <- as.numeric(pred)
+out_dos$inst$nm.age.grp_diffF <- as.numeric(pred)
 
 
 ## 3C: nodefactor("age.grp") ##
@@ -685,7 +719,7 @@ summary(mod)
 dat <- data.frame(city2 = city_name, age.grp = 1:3)
 pred <- predict(mod, newdata = dat, type = "response")/52
 
-out$inst$nf.age.grp <- as.numeric(pred)
+out_dos$inst$nf.age.grp <- as.numeric(pred)
 
 
 ## 3D: nodematch("race", diff = TRUE) ##
@@ -701,7 +735,7 @@ summary(mod)
 dat <- data.frame(city2 = city_name, race.cat3 = 0:2)
 pred <- predict(mod, newdata = dat, type = "response")
 
-out$inst$nm.race <- as.numeric(pred)
+out_dos$inst$nm.race <- as.numeric(pred)
 
 
 ## 3D: nodematch("race", diff = FALSE) ##
@@ -713,7 +747,7 @@ summary(mod)
 dat <- data.frame(city2 = city_name)
 pred <- predict(mod, newdata = dat, type = "response")
 
-out$inst$nm.race_diffF <- as.numeric(pred)
+out_dos$inst$nm.race_diffF <- as.numeric(pred)
 
 
 ## 3E: nodefactor("race") ##
@@ -725,7 +759,7 @@ summary(mod)
 dat <- data.frame(city2 = city_name, race.cat3 = 0:2)
 pred <- predict(mod, newdata = dat, type = "response")/52
 
-out$inst$nf.race <- as.numeric(pred)
+out_dos$inst$nf.race <- as.numeric(pred)
 
 
 ## 3F: nodefactor("risk.grp") ##
@@ -756,7 +790,7 @@ oo.quants * 52
 1/oo.quants
 
 # Save it
-out$inst$nf.risk.grp <- oo.quants
+out_dos$inst$nf.risk.grp <- oo.quants
 
 
 ## 3G: nodefactor("deg.tot") ##
@@ -765,7 +799,7 @@ d$deg.tot3 <- ifelse(d$deg.tot >= 3, 3, d$deg.tot)
 table(d$deg.tot3)
 
 deg.tot.dist <- prop.table(table(d$deg.tot3[d$city2 == city_name]))
-out$inst$deg.tot.dist <- as.numeric(deg.tot.dist)
+out_dos$inst$deg.tot.dist <- as.numeric(deg.tot.dist)
 
 mod <- glm(count.oo.part ~ city2 + deg.tot3 + sqrt(deg.tot3),
            data = d, family = poisson())
@@ -774,7 +808,7 @@ summary(mod)
 dat <- data.frame(city2 = city_name, deg.tot3 = 0:3)
 pred <- predict(mod, newdata = dat, type = "response")/52
 
-out$inst$nf.deg.tot <- as.numeric(pred)
+out_dos$inst$nf.deg.tot <- as.numeric(pred)
 
 
 ## 3H: nodefactor("diag.status") ##
@@ -786,7 +820,7 @@ summary(mod)
 dat <- data.frame(city2 = city_name, hiv2 = 0:1)
 pred <- predict(mod, newdata = dat, type = "response")/52
 
-out$inst$nf.diag.status <- as.numeric(pred)
+out_dos$inst$nf.diag.status <- as.numeric(pred)
 
 
 
@@ -823,7 +857,7 @@ roletype[d$nIAIpart == 0 & d$nRAIpart > 0] <- 1
 roletype[d$nIAIpart > 0 & d$nRAIpart > 0] <- 2
 table(roletype, useNA = "always")
 
-out$all$role.type <- prop.table(table(roletype))
+out_dos$all$role.type <- prop.table(table(roletype))
 
 
 
@@ -841,56 +875,56 @@ out$all$role.type <- prop.table(table(roletype))
 ## Mean Degree
 
 # Overall
-md.overall.main.ARTnet_DOS_script <- out$main$md.main
-md.overall.casl.ARTnet_DOS_script <- out$casl$md.casl
-md.overall.inst.ARTnet_DOS_script <- out$inst$md.inst
+md.overall.main.ARTnet_DOS_script <- out_dos$main$md.main
+md.overall.casl.ARTnet_DOS_script <- out_dos$casl$md.casl
+md.overall.inst.ARTnet_DOS_script <- out_dos$inst$md.inst
 
 # By Age Group
-md.age.main.ARTnet_DOS_script <- out$main$nf.age.grp
-md.age.casl.ARTnet_DOS_script <- out$casl$nf.age.grp
-md.age.inst.ARTnet_DOS_script <- out$inst$nf.age.grp
+md.age.main.ARTnet_DOS_script <- out_dos$main$nf.age.grp
+md.age.casl.ARTnet_DOS_script <- out_dos$casl$nf.age.grp
+md.age.inst.ARTnet_DOS_script <- out_dos$inst$nf.age.grp
 
 # By Race
-md.race.main.ARTnet_DOS_script <- out$main$nf.race
-md.race.casl.ARTnet_DOS_script <- out$casl$nf.race
-md.race.inst.ARTnet_DOS_script <- out$inst$nf.race
+md.race.main.ARTnet_DOS_script <- out_dos$main$nf.race
+md.race.casl.ARTnet_DOS_script <- out_dos$casl$nf.race
+md.race.inst.ARTnet_DOS_script <- out_dos$inst$nf.race
 
 # By Diagnosed HIV Status
-md.HIV_status.main.ARTnet_DOS_script <- out$main$nf.diag.status
-md.HIV_status.casl.ARTnet_DOS_script <- out$casl$nf.diag.status
-md.HIV_status.inst.ARTnet_DOS_script <- out$inst$nf.diag.status
+md.HIV_status.main.ARTnet_DOS_script <- out_dos$main$nf.diag.status
+md.HIV_status.casl.ARTnet_DOS_script <- out_dos$casl$nf.diag.status
+md.HIV_status.inst.ARTnet_DOS_script <- out_dos$inst$nf.diag.status
 
 # By Cross Partnership Degree
-md.casl_cross_deg.main.ARTnet_DOS_script <- out$main$nf.deg.casl
-md.main_cross_deg.casl.ARTnet_DOS_script <- out$casl$nf.deg.main
+md.casl_cross_deg.main.ARTnet_DOS_script <- out_dos$main$nf.deg.casl
+md.main_cross_deg.casl.ARTnet_DOS_script <- out_dos$casl$nf.deg.main
 
 
 ## Proportion Concurrent
-prop.concurrent.main.ARTnet_DOS_script <- out$main$concurrent
-prop.concurrent.casl.ARTnet_DOS_script <- out$casl$concurrent
+prop.concurrent.main.ARTnet_DOS_script <- out_dos$main$concurrent
+prop.concurrent.casl.ARTnet_DOS_script <- out_dos$casl$concurrent
 
 
 ## Mixing
 
 # By Age - Overall
-mixing.age.overall.main.ARTnet_DOS_script <- out$main$nm.age.grp_diffF
-mixing.age.overall.casl.ARTnet_DOS_script <- out$casl$nm.age.grp_diffF
-mixing.age.overall.inst.ARTnet_DOS_script <- out$inst$nm.age.grp_diffF
+mixing.age.overall.main.ARTnet_DOS_script <- out_dos$main$nm.age.grp_diffF
+mixing.age.overall.casl.ARTnet_DOS_script <- out_dos$casl$nm.age.grp_diffF
+mixing.age.overall.inst.ARTnet_DOS_script <- out_dos$inst$nm.age.grp_diffF
 
 # By Age - Within Age Group
-mixing.age.within_group.main.ARTnet_DOS_script <- out$main$nm.age.grp
-mixing.age.within_group.casl.ARTnet_DOS_script <- out$casl$nm.age.grp
-mixing.age.within_group.inst.ARTnet_DOS_script <- out$inst$nm.age.grp
+mixing.age.within_group.main.ARTnet_DOS_script <- out_dos$main$nm.age.grp
+mixing.age.within_group.casl.ARTnet_DOS_script <- out_dos$casl$nm.age.grp
+mixing.age.within_group.inst.ARTnet_DOS_script <- out_dos$inst$nm.age.grp
 
 # By Race - Overall
-mixing.race.overall.main.ARTnet_DOS_script <- out$main$nm.race_diffF
-mixing.race.overall.casl.ARTnet_DOS_script <- out$casl$nm.race_diffF
-mixing.race.overall.inst.ARTnet_DOS_script <- out$inst$nm.race_diffF
+mixing.race.overall.main.ARTnet_DOS_script <- out_dos$main$nm.race_diffF
+mixing.race.overall.casl.ARTnet_DOS_script <- out_dos$casl$nm.race_diffF
+mixing.race.overall.inst.ARTnet_DOS_script <- out_dos$inst$nm.race_diffF
 
 # By Race - Within Race Group
-mixing.race.within_group.main.ARTnet_DOS_script <- out$main$nm.race
-mixing.race.within_group.casl.ARTnet_DOS_script <- out$casl$nm.race
-mixing.race.within_group.inst.ARTnet_DOS_script <- out$inst$nm.race
+mixing.race.within_group.main.ARTnet_DOS_script <- out_dos$main$nm.race
+mixing.race.within_group.casl.ARTnet_DOS_script <- out_dos$casl$nm.race
+mixing.race.within_group.inst.ARTnet_DOS_script <- out_dos$inst$nm.race
 
 
 ## Mean Duration
@@ -901,49 +935,101 @@ duration.casl.ARTnet_DOS_script <- durs.casl.all$mean.dur.adj
 ## One-Time Partner Rates 
 
 # By Main+Casual Degree
-OTP.rates.by.degree.ARTnet_DOS_script <- out$inst$nf.deg.tot
+OTP.rates.by.degree.ARTnet_DOS_script <- out_dos$inst$nf.deg.tot
 
 # By Risk Quintile
-OTP.rates.by.risk.ARTnet_DOS_script <- out$inst$nf.risk.grp
-
-
+OTP.rates.by.risk.ARTnet_DOS_script <- out_dos$inst$nf.risk.grp
 ```
 
-## 2. ARTnet-RADAR Netparams Script - 3 Month Offset Method
+Using the day-of-survey method, the mean degree of main partnerships among individuals in the ART-net dataset is
+```{r tessst, echo=FALSE}
+round(out_dos$main$md.main,4)
+```
 
-```{r ARTnet-RADAR_Netparams_Script_3MO, eval=FALSE}
+```{r dos_results, echo=FALSE}
+cat("Using the day-of-survey method, the mean degree of main partnerships\n among individuals in the ART-net dataset is: ", round(out_dos$main$md.main,4))
 
+cat("Using the day-of-survey method, the mean degree of casual partnerships\n among individuals in the ART-net dataset is: ", round(out_dos$casl$md.casl,4))
+```
+
+\newpage
+In contrast, an alternate approach referred to as the **three-month offset method**, for deriving active and ongoing partnerships may also be used in the instance where individuals are not explicitly asked about number of active and ongoing partners at the time of the survey. 
+
+The three-month offset method starts by taking a three-month offset of the survey date. For example, if an individual was surveyed July 15th 2019, then their three-month offset would be April 15th 2019. Once this offset is established for all surveyed individuals, each individual partership is assessed to determine if the three-month offset falls between the start and end date of the partnership. If the three-month offset falls between the partership start and end date, then the partnership is considered active and ongoing; otherwise, it is not considered active and ongoing.
+
+![Three-Month Offset Method Data Scenario](Mean Degree of Ongoing Partnerships - Three-Month Offset Method Data Scenario.png)
+\newpage
+
+
+```{r n_month, warning=FALSE, include=FALSE}
 ##
-## 02 - Network parameter analysis for ARTnet-RADAR Model - Three Month Offset
+## 02 - Network parameter analysis for ARTnet-RADAR Model - N Month Offset
 ##
 
 ## Packages ##
 library("tidyverse")
 library("ARTnetData")
 
-## Data ##
-d <- ARTnet.wide
-l <- ARTnet.long
+out_list <- list()
 
-## Inputs ##
-city_name <- "Chicago"
-coef_name <- paste0("city2", city_name)
+md.overall.main.ARTnet_N_MO_script <- list()
+md.overall.casl.ARTnet_N_MO_script <- list()
+md.overall.inst.ARTnet_N_MO_script <- list()
+md.age.main.ARTnet_N_MO_script <- list()
+md.age.casl.ARTnet_N_MO_script <- list()
+md.age.inst.ARTnet_N_MO_script <- list()
+md.race.main.ARTnet_N_MO_script <- list()
+md.race.casl.ARTnet_N_MO_script <- list()
+md.race.inst.ARTnet_N_MO_script <- list()
+md.HIV_status.main.ARTnet_N_MO_script <- list()
+md.HIV_status.casl.ARTnet_N_MO_script <- list()
+md.HIV_status.inst.ARTnet_N_MO_script <- list()
+md.casl_cross_deg.main.ARTnet_N_MO_script <- list()
+md.main_cross_deg.casl.ARTnet_N_MO_script <- list()
+prop.concurrent.main.ARTnet_N_MO_script <- list()
+prop.concurrent.casl.ARTnet_N_MO_script <- list()
+mixing.age.overall.main.ARTnet_N_MO_script <- list()
+mixing.age.overall.casl.ARTnet_N_MO_script <- list()
+mixing.age.overall.inst.ARTnet_N_MO_script <- list()
+mixing.age.within_group.main.ARTnet_N_MO_script <- list()
+mixing.age.within_group.casl.ARTnet_N_MO_script <- list()
+mixing.age.within_group.inst.ARTnet_N_MO_script <- list()
+mixing.race.overall.main.ARTnet_N_MO_script <- list()
+mixing.race.overall.casl.ARTnet_N_MO_script <- list()
+mixing.race.overall.inst.ARTnet_N_MO_script <- list()
+mixing.race.within_group.main.ARTnet_N_MO_script <- list()
+mixing.race.within_group.casl.ARTnet_N_MO_script <- list()
+mixing.race.within_group.inst.ARTnet_N_MO_script <- list()
+duration.main.ARTnet_N_MO_script <- list()
+duration.casl.ARTnet_N_MO_script <- list()
+OTP.rates.by.degree.ARTnet_N_MO_script <- list()
+OTP.rates.by.risk.ARTnet_N_MO_script <- list()
 
+for (i in 1:13) {
 
-# 0. Data Processing ------------------------------------------------------
-
-## Degree calculations ##
-
-l$ONGOING <- as.numeric(l$ONGOING)
-l$ongoing2 <- ifelse(is.na(l$ONGOING), 0, l$ONGOING)
-
-prior.month.of.evaluation <- 3
+  ## Data ##
+  d <- ARTnet.wide
+  l <- ARTnet.long
+  
+  ## Inputs ##
+  city_name <- "Chicago"
+  coef_name <- paste0("city2", city_name)
+  
+  
+  # 0. Data Processing ------------------------------------------------------
+  
+  ## Degree calculations ##
+  
+  l$ONGOING <- as.numeric(l$ONGOING)
+  l$ongoing2 <- ifelse(is.na(l$ONGOING), 0, l$ONGOING)
+  
+prior.month.of.evaluation <- i-1
 ARTnet.long$ongoing.evaluation.date <- ARTnet.long$SUB_DATE -
   round(prior.month.of.evaluation*30.44)
 l$ongoing3 <- ifelse(ARTnet.long$start.date <
-                                 ARTnet.long$ongoing.evaluation.date &
-                                 ARTnet.long$end.date >
-                                 ARTnet.long$ongoing.evaluation.date, 1, 0)
+                       ARTnet.long$ongoing.evaluation.date &
+                       ARTnet.long$end.date + 1 >
+                       ARTnet.long$ongoing.evaluation.date, 1, 0)
 l$ONGOING <- NULL
 
 d <- l %>%
@@ -1065,9 +1151,6 @@ l$hiv.concord <- ifelse(hiv.combo %in% 0:1, 1, 0)
 l$hiv.concord.pos <- ifelse(hiv.combo == 2, 1, 0)
 table(l$hiv.concord)
 table(l$hiv.concord.pos)
-
-
-
 
 # Age Filtering
 l <- filter(l, age >= 16 & age <= 29)
@@ -1720,10 +1803,10 @@ table(roletype, useNA = "always")
 
 out$all$role.type <- prop.table(table(roletype))
 
-
+out_list[[i]] <- out
 
 # SAVE --------------------------------------------------------------------
- 
+
 # fn <- paste("ARTnetWorkflow/data/artnet.NetParam", gsub(" ", "", city_name), "rda", sep = ".")
 # saveRDS(out, file = fn)
 
@@ -1734,299 +1817,207 @@ out$all$role.type <- prop.table(table(roletype))
 ## Mean Degree
 
 # Overall
-md.overall.main.ARTnet_3MO_script <- out$main$md.main
-md.overall.casl.ARTnet_3MO_script <- out$casl$md.casl
-md.overall.inst.ARTnet_3MO_script <- out$inst$md.inst
+md.overall.main.ARTnet_N_MO_script[[i]] <- out$main$md.main
+md.overall.casl.ARTnet_N_MO_script[[i]] <- out$casl$md.casl
+md.overall.inst.ARTnet_N_MO_script[[i]] <- out$inst$md.inst
 
 # By Age Group
-md.age.main.ARTnet_3MO_script <- out$main$nf.age.grp
-md.age.casl.ARTnet_3MO_script <- out$casl$nf.age.grp
-md.age.inst.ARTnet_3MO_script <- out$inst$nf.age.grp
+md.age.main.ARTnet_N_MO_script[[i]] <- out$main$nf.age.grp
+md.age.casl.ARTnet_N_MO_script[[i]] <- out$casl$nf.age.grp
+md.age.inst.ARTnet_N_MO_script[[i]] <- out$inst$nf.age.grp
 
 # By Race
-md.race.main.ARTnet_3MO_script <- out$main$nf.race
-md.race.casl.ARTnet_3MO_script <- out$casl$nf.race
-md.race.inst.ARTnet_3MO_script <- out$inst$nf.race
+md.race.main.ARTnet_N_MO_script[[i]] <- out$main$nf.race
+md.race.casl.ARTnet_N_MO_script[[i]] <- out$casl$nf.race
+md.race.inst.ARTnet_N_MO_script[[i]] <- out$inst$nf.race
 
 # By Diagnosed HIV Status
-md.HIV_status.main.ARTnet_3MO_script <- out$main$nf.diag.status
-md.HIV_status.casl.ARTnet_3MO_script <- out$casl$nf.diag.status
-md.HIV_status.inst.ARTnet_3MO_script <- out$inst$nf.diag.status
+md.HIV_status.main.ARTnet_N_MO_script[[i]] <- out$main$nf.diag.status
+md.HIV_status.casl.ARTnet_N_MO_script[[i]] <- out$casl$nf.diag.status
+md.HIV_status.inst.ARTnet_N_MO_script[[i]] <- out$inst$nf.diag.status
 
 # By Cross Partnership Degree
-md.casl_cross_deg.main.ARTnet_3MO_script <- out$main$nf.deg.casl
-md.main_cross_deg.casl.ARTnet_3MO_script <- out$casl$nf.deg.main
+md.casl_cross_deg.main.ARTnet_N_MO_script[[i]] <- out$main$nf.deg.casl
+md.main_cross_deg.casl.ARTnet_N_MO_script[[i]] <- out$casl$nf.deg.main
 
 
 ## Proportion Concurrent
-prop.concurrent.main.ARTnet_3MO_script <- out$main$concurrent
-prop.concurrent.casl.ARTnet_3MO_script <- out$casl$concurrent
+prop.concurrent.main.ARTnet_N_MO_script[[i]] <- out$main$concurrent
+prop.concurrent.casl.ARTnet_N_MO_script[[i]] <- out$casl$concurrent
 
 
 ## Mixing
 
 # By Age - Overall
-mixing.age.overall.main.ARTnet_3MO_script <- out$main$nm.age.grp_diffF
-mixing.age.overall.casl.ARTnet_3MO_script <- out$casl$nm.age.grp_diffF
-mixing.age.overall.inst.ARTnet_3MO_script <- out$inst$nm.age.grp_diffF
+mixing.age.overall.main.ARTnet_N_MO_script[[i]] <- out$main$nm.age.grp_diffF
+mixing.age.overall.casl.ARTnet_N_MO_script[[i]] <- out$casl$nm.age.grp_diffF
+mixing.age.overall.inst.ARTnet_N_MO_script[[i]] <- out$inst$nm.age.grp_diffF
 
 # By Age - Within Age Group
-mixing.age.within_group.main.ARTnet_3MO_script <- out$main$nm.age.grp
-mixing.age.within_group.casl.ARTnet_3MO_script <- out$casl$nm.age.grp
-mixing.age.within_group.inst.ARTnet_3MO_script <- out$inst$nm.age.grp
+mixing.age.within_group.main.ARTnet_N_MO_script[[i]] <- out$main$nm.age.grp
+mixing.age.within_group.casl.ARTnet_N_MO_script[[i]] <- out$casl$nm.age.grp
+mixing.age.within_group.inst.ARTnet_N_MO_script[[i]] <- out$inst$nm.age.grp
 
 # By Race - Overall
-mixing.race.overall.main.ARTnet_3MO_script <- out$main$nm.race_diffF
-mixing.race.overall.casl.ARTnet_3MO_script <- out$casl$nm.race_diffF
-mixing.race.overall.inst.ARTnet_3MO_script <- out$inst$nm.race_diffF
+mixing.race.overall.main.ARTnet_N_MO_script[[i]] <- out$main$nm.race_diffF
+mixing.race.overall.casl.ARTnet_N_MO_script[[i]] <- out$casl$nm.race_diffF
+mixing.race.overall.inst.ARTnet_N_MO_script[[i]] <- out$inst$nm.race_diffF
 
 # By Race - Within Race Group
-mixing.race.within_group.main.ARTnet_3MO_script <- out$main$nm.race
-mixing.race.within_group.casl.ARTnet_3MO_script <- out$casl$nm.race
-mixing.race.within_group.inst.ARTnet_3MO_script <- out$inst$nm.race
+mixing.race.within_group.main.ARTnet_N_MO_script[[i]] <- out$main$nm.race
+mixing.race.within_group.casl.ARTnet_N_MO_script[[i]] <- out$casl$nm.race
+mixing.race.within_group.inst.ARTnet_N_MO_script[[i]] <- out$inst$nm.race
 
 
 ## Mean Duration
-duration.main.ARTnet_3MO_script <- durs.main.all$mean.dur.adj
-duration.casl.ARTnet_3MO_script <- durs.casl.all$mean.dur.adj
+duration.main.ARTnet_N_MO_script[[i]] <- durs.main.all$mean.dur.adj
+duration.casl.ARTnet_N_MO_script[[i]] <- durs.casl.all$mean.dur.adj
 
 
 ## One-Time Partner Rates 
 
 # By Main+Casual Degree
-OTP.rates.by.degree.ARTnet_3MO_script <- out$inst$nf.deg.tot
+OTP.rates.by.degree.ARTnet_N_MO_script[[i]] <- out$inst$nf.deg.tot
 
 # By Risk Quintile
-OTP.rates.by.risk.ARTnet_3MO_script <- out$inst$nf.risk.grp
+OTP.rates.by.risk.ARTnet_N_MO_script[[i]] <- out$inst$nf.risk.grp
+
+}
 
 ```
 
-## 3. ARTnet Workflow Script
+\newpage
+Here are the results comparing mean degree by partnership type (main or casual) and method of determining ongoing partnerships (day-of-survey or three-month offset) in table form:
 
-```{r ARTnet_Workflow_Script, eval=FALSE}
-#Load ARTnet
-library("ARTnet")
-library("tidyverse")
+```{r comparison, warning=FALSE, include=FALSE}
 
-#1. Epistats: Specify geographic features, as well as race stratification and total age range
-#under consideration
-epistats <- build_epistats(geog.lvl = "city", geog.cat = "Chicago", race = TRUE, age.limits = c(16, 29),
-                            age.breaks = c(18, 24))
+Partnership.Type <- rbind(c("Main"),c("Casual"))
 
-#2. Netparams: Specify age categories if needed, or let ARTnet determine age categories by number of
-#categories desired
-netparams <- build_netparams(epistats = epistats, smooth.main.dur = TRUE)
+mean.degree.main <- data.frame(round(out_dos$main$md.main,4), round(out_list[[3]][[1]][[1]][1],4))
+colnames(mean.degree.main) <- c("Day-of-Survey", "Three-Month")
 
-#3. Netstats: Finalize network setup
-netstats <- build_netstats(epistats, netparams, expect.mort = 0.0005,
-                           network.size = 1000, edges.avg = TRUE)
+mean.degree.casl <- data.frame(round(out_dos$casl$md.casl,4), round(out_list[[3]][[2]][[1]][1],4))
+colnames(mean.degree.casl) <- c("Day-of-Survey", "Three-Month")
 
-#4. Initialize network using `netstats` object from previous step
-num <- netstats$demog$num
-nw <- network::network.initialize(num, directed = FALSE)
+mean.degree.df <- data.frame(matrix(ncol = 2, nrow = 0))
+colnames(mean.degree.df) <- c("Day-of-Survey", "Three-Month")
 
-attr.names <- names(netstats$attr)
-attr.values <- netstats$attr
-nw <- network::set.vertex.attribute(nw, attr.names, attr.values)
-nw_main <- nw_casl <- nw_inst <- nw
+mean.degree.df <- rbind(mean.degree.df, mean.degree.main, mean.degree.casl)
 
-# 5. Main Model
+mean.degree.df
 
-#Formula:
-model_main <- ~edges +
-  nodematch("age.grp", diff = TRUE) +
-  nodefactor("age.grp", levels = -1) +
-  nodematch("race", diff = FALSE) + #race = TRUE; omit if FALSE
-  nodefactor("race", levels = -1) +
-  nodefactor("deg.casl", levels = -1) +
-  concurrent +
-  degrange(from = 3) +
-  nodematch("role.class", diff = TRUE, levels = 1:2
-  )
+```
 
-# Target Stats
-netstats_main <- c(
-  edges = netstats$main$edges,
-  nodematch_age.grp = netstats$main$nodematch_age.grp,
-  nodefactor_age.grp = netstats$main$nodefactor_age.grp[-1],
-  nodematch_race = netstats$main$nodematch_race_diffF, #If race = FALSE, value will be NULL
-  nodefactor_race = netstats$main$nodefactor_race[-1],
-  nodefactor_deg.casl = netstats$main$nodefactor_deg.casl[-1],
-  concurrent = netstats$main$concurrent,
-  degrange = 0,
-  nodematch_role.class = c(0, 0)
-)
-cbind(netstats_main)
-netstats_main <- unname(netstats_main)
+```{r comparison_final, warning=FALSE, echo=FALSE}
+mean.degree.df.final <- data.frame(matrix(ncol = 3, nrow = 0))
+colnames(mean.degree.df.final) <- c("Type","Day-of-Survey","Three.Month")
 
-# Fit model
-fit_main <- netest(nw_main,
-                   formation = model_main,
-                   target.stats = netstats_main,
-                   coef.diss = netstats$main$diss.byage,
-                   set.control.ergm = control.ergm(MCMLE.maxit = 500,
-                                                   SAN.maxit = 3,
-                                                   SAN.nsteps.times = 3),
-                   verbose = FALSE)
+mean.degree.df.final <- cbind(Partnership.Type, mean.degree.df)
 
-# 6. Casual Model
+kable(mean.degree.df.final) %>%
+  kable_styling(bootstrap_options = "striped", font_size = 12)
 
-# Formula
-model_casl <- ~edges +
-  nodematch("age.grp", diff = TRUE) +
-  nodefactor("age.grp", levels = -c(1,5)) +
-  nodefactor("deg.main", levels = -3) +
-  concurrent +
-  degrange(from = 4) +
-  nodematch("role.class", diff = TRUE, levels = 1:2) +
-  #If race = TRUE:
-  nodematch("race", diff = FALSE) +
-  nodefactor("race", levels = -1)
+```
 
-# Target Stats
-netstats_casl <- c(
-  edges = netstats$casl$edges,
-  nodematch_age.grp = netstats$casl$nodematch_age.grp,
-  nodefactor_age.grp = netstats$casl$nodefactor_age.grp[-c(1,5)],
-  nodefactor_deg.main = netstats$casl$nodefactor_deg.main[-3],
-  concurrent = netstats$casl$concurrent,
-  degrange = 0,
-  nodematch_role.class = c(0, 0),
-  #If race = TRUE:
-  nodematch_race = netstats$casl$nodematch_race_diffF,
-  nodefactor_race = netstats$casl$nodefactor_race[-1]
-)
-cbind(netstats_casl)
-netstats_casl <- unname(netstats_casl)
+The mean degree by partnership type calculated using the day-of-survey and three-month offset methods are similar.
 
-# Fit model
-fit_casl <- netest(nw_casl,
-                   formation = model_casl,
-                   target.stats = netstats_casl,
-                   coef.diss = netstats$casl$diss.byage,
-                   set.control.ergm = control.ergm(MCMLE.maxit = 500,
-                                                   SAN.maxit = 3,
-                                                   SAN.nsteps.times = 3),
-                   verbose = FALSE)
+Next, instead of assessing ongoing partnerships using a three-month offset, we can generalize our approach to look at n-month offsets for user specified values of n.
 
-# 7. One-Off Model
+For the purpose of this example, we assessed ongoing partnerships with one- to twelve- month offsets and reviewed how mean degree would change depending on months of offset.
 
-# Formula
-model_inst <- ~edges +
-  nodematch("age.grp", diff = FALSE) +
-  nodefactor("age.grp", levels = -1) +
-  nodefactor("risk.grp", levels = -5) +
-  nodefactor("deg.tot", levels = -1) +
-  nodematch("role.class", diff = TRUE, levels = 1:2) +
-  #If race = TRUE
-  nodematch("race", diff = FALSE) +
-  nodefactor("race", levels = -1)
+The pairs of plots below show how mean degree changes depending on number of months of offset used for determination of whether or not a partnership is ongoing. The plots show the same data, with the second pair of plots showing the results at larger scale.
 
-# Target Stats
-netstats_inst <- c(
-  edges = netstats$inst$edges,
-  nodematch_age.grp = sum(netstats$inst$nodematch_age.grp),
-  nodefactor_age.grp = netstats$inst$nodefactor_age.grp[-1],
-  nodefactor_risk.grp = netstats$inst$nodefactor_risk.grp[-5],
-  nodefactor_deg.tot = netstats$inst$nodefactor_deg.tot[-1],
-  nodematch_role.class = c(0, 0),
-  #If race = TRUE
-  nodematch_race = netstats$inst$nodematch_race_diffF,
-  nodefactor_race = netstats$inst$nodefactor_race[-1]
-)
-cbind(netstats_inst)
-netstats_inst <- unname(netstats_inst)
+The data may also be viewed in the table below the pair of plots.
 
-# Fit model
-fit_inst <- netest(nw_inst,
-                   formation = model_inst,
-                   target.stats = netstats_inst,
-                   coef.diss = dissolution_coefs(~offset(edges), 1),
-                   set.control.ergm = control.ergm(MCMLE.maxit = 500,
-                                                   SAN.maxit = 3,
-                                                   SAN.nsteps.times = 3),
-                   verbose = FALSE)
+\newpage
+```{r plots_tables, fig.align='center', fig.height=8, echo=FALSE}
+# RESULTS
 
-# 8. Save Data
+par(mfrow=c(2,2))
 
-# out <- list(fit_main, fit_casl, fit_inst)
-# saveRDS(out, file = "netest.rda")
-# 
-# out2 <- list(netstats_main, netstats_casl, netstats_inst)
-# saveRDS(out2, file = "netstats.rda")
+plot(1:13, md.overall.main.ARTnet_N_MO_script, 
+     main = "\n\n\nMain Partnerships",
+     xlab = "Number of Offset Months",
+     ylab = "Mean Degree",
+     ylim = c(0,1),
+     xaxt = "n",
+     cex.main = 0.8)
+axis(1, at=1:13, labels=0:12)
+abline(h=out_dos$main$md.main, col="blue")
+text(0.45*(12 - 0),
+     1.12*out_dos$main$md.main,
+     paste("Mean Degree:\nDay-of-Survey Method = ",round(out_dos$main$md.main,4),sep=""),
+     cex = 0.5,
+     adj = 0)
 
+plot(1:13, md.overall.casl.ARTnet_N_MO_script, 
+     main = "\n\n\nCasual Partnerships", 
+     xlab = "Number of Offset Months",
+     ylab = "Mean Degree",
+     ylim = c(0,1),
+     xaxt = "n",
+     cex.main = 0.8)
+axis(1, at=1:13, labels=0:12)
+abline(h=out_dos$casl$md.casl, col="purple")
+text(0.45*(12 - 0),
+     1.1*out_dos$casl$md.casl,
+     paste("Mean Degree:\nDay-of-Survey Method = ",round(out_dos$casl$md.casl,4),sep=""),
+     cex = 0.5,
+     adj = 0)
+mtext("Partnership Mean Degree", side = 3, line = -1, outer = TRUE, font = 2)
+mtext("N-Month Offset Method - Points, Day-of-Survey Method - Line", side = 3, line = -2, outer = TRUE, font = 2, cex = 0.75)
 
-#####################################################
+plot(1:13, md.overall.main.ARTnet_N_MO_script, 
+     main = "Main Partnerships - Scaled",
+     xlab = "Number of Offset Months",
+     ylab = "Mean Degree",
+     xaxt = "n",
+     cex.main = 0.8)
+axis(1, at=1:13, labels=0:12)
+abline(h=out_dos$main$md.main, col="blue")
+text(0.3*(12 - 0),
+     0.99*out_dos$main$md.main,
+     paste("Mean Degree:\nDay-of-Survey Method = ",round(out_dos$main$md.main,4),sep=""),
+     cex = .5,
+     adj = 0)
 
-## OUTPUTS
+plot(1:13, md.overall.casl.ARTnet_N_MO_script, 
+     main = "Casual Partnerships - Scaled",
+     xlab = "Number of Offset Months",
+     ylab = "Mean Degree",
+     xaxt = "n",
+     cex.main = 0.8)
+axis(1, at=1:13, labels=0:12)
+abline(h=out_dos$casl$md.casl, col="purple")
+text(0.45*(12 - 0),
+     1.01*out_dos$casl$md.casl,
+     paste("Mean Degree:\nDay-of-Survey Method = ",round(out_dos$casl$md.casl,4),sep=""),
+     cex = .5,
+     adj = 0)
 
-## Mean Degree
+par(xpd = TRUE)
+text(par("usr")[2] - 18,y=mean(par("usr")[3:4]) + 0,"test taxis label",srt=-270)
 
-# Overall
-md.overall.main.ARTnet_workflow_script <- netparams$main$md.main
-md.overall.casl.ARTnet_workflow_script <- netparams$casl$md.casl
-md.overall.inst.ARTnet_workflow_script <- netparams$inst$md.inst
+n_month <- 0:12
 
-# By Age Group
-md.age.main.ARTnet_workflow_script <- netparams$main$nf.age.grp
-md.age.casl.ARTnet_workflow_script <- netparams$casl$nf.age.grp
-md.age.inst.ARTnet_workflow_script <- netparams$inst$nf.age.grp
+#Mean degree - main
+mean.degree.main.df <- data.frame(n_month, round(unlist(md.overall.main.ARTnet_N_MO_script),4))
 
-# By Race
-md.race.main.ARTnet_workflow_script <- netparams$main$nf.race
-md.race.casl.ARTnet_workflow_script <- netparams$casl$nf.race
-md.race.inst.ARTnet_workflow_script <- netparams$inst$nf.race
+#Mean degree - casual
+mean.degree.casual.df <- data.frame(n_month, round(unlist(md.overall.casl.ARTnet_N_MO_script),4))
 
-# By Diagnosed HIV Status
-md.HIV_status.main.ARTnet_workflow_script <- netparams$main$nf.diag.status
-md.HIV_status.casl.ARTnet_workflow_script <- netparams$casl$nf.diag.status
-md.HIV_status.inst.ARTnet_workflow_script <- netparams$inst$nf.diag.status
+mean.degree.table <- mean.degree.main.df %>%
+  left_join(mean.degree.casual.df, by = "n_month")
+colnames(mean.degree.table) <- c("Month", "Main", "Casual")
 
-# By Cross Partnership Degree
-md.casl_cross_deg.main.ARTnet_workflow_script <- netparams$main$nf.deg.casl
-md.main_cross_deg.casl.ARTnet_workflow_script <- netparams$casl$nf.deg.main
+mean.degree.table <- setNames(data.frame(t(mean.degree.table[,-1])), mean.degree.table[,1])
 
+dos_ref_col <- rbind(c(round(out_dos$main$md.main,4)),c(round(out_dos$casl$md.casl,4)))
+colnames(dos_ref_col) <- c("Day-of-Survey")
 
-## Proportion Concurrent
-prop.concurrent.main.ARTnet_workflow_script <- netparams$main$concurrent
-prop.concurrent.casl.ARTnet_workflow_script <- netparams$casl$concurrent
+mean.degree.table <- cbind(dos_ref_col, mean.degree.table)
 
-
-## Mixing
-
-# By Age - Overall
-# Note: These terms are not output by netparams
-# mixing.age.overall.main.ARTnet_workflow_script <- netparams$main$nm.age.grp_diffF
-# mixing.age.overall.casl.ARTnet_workflow_script <- netparams$casl$nm.age.grp_diffF
-# mixing.age.overall.inst.ARTnet_workflow_script <- netparams$inst$nm.age.grp_diffF
-
-# By Age - Within Age Group
-mixing.age.within_group.main.ARTnet_workflow_script <- netparams$main$nm.age.grp
-mixing.age.within_group.casl.ARTnet_workflow_script <- netparams$casl$nm.age.grp
-mixing.age.within_group.inst.ARTnet_workflow_script <- netparams$inst$nm.age.grp
-
-# By Race - Overall
-mixing.race.overall.main.ARTnet_workflow_script <- netparams$main$nm.race_diffF
-mixing.race.overall.casl.ARTnet_workflow_script <- netparams$casl$nm.race_diffF
-mixing.race.overall.inst.ARTnet_workflow_script <- netparams$inst$nm.race_diffF
-
-# By Race - Within Race Group
-mixing.race.within_group.main.ARTnet_workflow_script <- netparams$main$nm.race
-mixing.race.within_group.casl.ARTnet_workflow_script <- netparams$casl$nm.race
-mixing.race.within_group.inst.ARTnet_workflow_script <- netparams$inst$nm.race
-
-
-## Mean Duration
-duration.main.ARTnet_workflow_script <- netparams$main$durs.main.byage$mean.dur.adj
-duration.casl.ARTnet_workflow_script <- netparams$casl$durs.casl.byage$mean.dur.adj
-
-
-## One-Time Partner Rates
-
-# By Main+Casual Degree
-OTP.rates.by.degree.ARTnet_workflow_script <- netparams$inst$nf.deg.tot
-
-# By Risk Quintile
-OTP.rates.by.risk.ARTnet_workflow_script <- netparams$inst$nf.risk.grp
+kable(mean.degree.table) %>%
+  kable_styling(bootstrap_options = "striped", font_size = 6)
 
 ```
