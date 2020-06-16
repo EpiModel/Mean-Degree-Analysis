@@ -44,11 +44,11 @@ ARTnet.wide <- ARTnet.long %>%
   summarise(deg.casl.dos = sum(ongoing2)) %>%
   right_join(ARTnet.wide, by = "AMIS_ID")
 
-# Set 2557 missing values for mean degree of main relationships to 0
+# Set 2557 missing values for degree of main relationships to 0
 ARTnet.wide$deg.main.dos <- ifelse(is.na(ARTnet.wide$deg.main.dos),
                                    0, ARTnet.wide$deg.main.dos)
 
-# Set 2049 missing values for mean degree of casual relationships to 0
+# Set 2049 missing values for degree of casual relationships to 0
 ARTnet.wide$deg.casl.dos <- ifelse(is.na(ARTnet.wide$deg.casl.dos),
                                    0, ARTnet.wide$deg.casl.dos)
 
@@ -365,6 +365,16 @@ n_month_offset <- function(start_month, end_month, filter_var='all',
        ifelse(ARTnet.wide$age >= 55 & ARTnet.wide$age <= 65, '55-65',
        ifelse(ARTnet.wide$age >= 66, '66+', 'unknown'))))))
 
+  #Create variable 'HLEDUCAT_2' for new highest level fo education categories
+  # 0: High school or below
+  # 1: Some college
+  # 2: College and above
+  # NA: Missing ()
+
+  ARTnet.wide$HLEDUCAT_2 <- ifelse(ARTnet.wide$HLEDUCAT <= 3, 0,
+                            ifelse(ARTnet.wide$HLEDUCAT == 4, 1,
+                            ifelse(ARTnet.wide$HLEDUCAT == 5, 2, NA)))
+
   #Initialize matrices for storing by-month mean degree calculations
     #Total
     mean.degree.total <- matrix(nrow = nrow(unique(ARTnet.wide[filter_var]))
@@ -640,23 +650,22 @@ n_month_offset <- function(start_month, end_month, filter_var='all',
 
 }
 
-# Example
+# Examples
 
 all <- n_month_offset(0,12)
 race.cat <- n_month_offset(0,12,'race.cat')
 age.cat <- n_month_offset(0,12,'age.cat')
-city <- n_month_offset(0,12,'city')
-
+division <- n_month_offset(0,12,'DIVCODE')
+region <- n_month_offset(0,12,'REGCODE')
+income <- n_month_offset(0,12,'HHINCOME')
+income <- income %>% filter(!is.na(var_val) &
+                      var_val < 77)
+education <- n_month_offset(0,12,'HLEDUCAT_2')
+education <- education %>% filter(!is.na(var_val))
 
 ## plots function----------------------------------------------------------------------------
 
 # The plot_md_comparisons then uses the data frames generated from the n_month_offset function to plot comparisons of mean degree by day of survey and n-month offset for specified month offset ranges.
-
-# It can be used as follows:
-# plot_md_comparisons(all)
-# plot_md_comparisons(race.cat)
-# plot_md_comparisons(age.cat)
-# plot_md_comparisons(city)
 
 # Results from the function are below.
 
@@ -832,8 +841,34 @@ plot_md_comparisons(age.cat, "Age Category",
                       "35-44 years",
                       "45-54 years",
                       "55-65 years"))
-plot_md_comparisons(city, "City",
-                    sort(unique(city$var_val)))
+plot_md_comparisons(region, "Census Region",
+                    c("Northeast",
+                      "Midwest",
+                      "South",
+                      "West"))
+plot_md_comparisons(division, "Census Division",
+                    c("New England",
+                      "Middle Atlantic",
+                      "East North Central",
+                      "West North Central",
+                      "South Atlantic",
+                      "East South Central",
+                      "West South Central",
+                      "Mountain",
+                      "Pacific"))
+plot_md_comparisons(education, "Highest Level \n of Education",
+                    c("High school or below",
+                      "Some college",
+                      "College and above"))
+plot_md_comparisons(education, "Highest Level \n of Education",
+                    c("High school or below",
+                      "Some college",
+                      "College and above"))
+plot_md_comparisons(income, "Annual Household Income",
+                    c("$0 to $19,999",
+                      "$20,000 to $39,999",
+                      "$40,000 to $74,999",
+                      "$75,000 or more"))
 
 
 ## investigation_zero_month------------------------------------------------------------------
