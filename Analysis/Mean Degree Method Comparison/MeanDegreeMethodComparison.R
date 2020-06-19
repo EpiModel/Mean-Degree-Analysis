@@ -64,6 +64,51 @@ cat("Using the day-of-survey method, the mean degree of casual partnerships
     \n among individuals in the ART-net dataset is: ",
     round(mean.deg.casl.dos,4))
 
+## Table 1 -----------------------------------------------------------------------------------
+
+## Individual-level characteristics
+
+# Create Variable 'Age.Cat' to Create Age Categories for Ages
+ARTnet.wide$age.cat <- ifelse(ARTnet.wide$age >= 15 & ARTnet.wide$age <= 24, '15-24',
+                       ifelse(ARTnet.wide$age >= 25 & ARTnet.wide$age <= 34, '25-34',
+                       ifelse(ARTnet.wide$age >= 35 & ARTnet.wide$age <= 44, '35-44',
+                       ifelse(ARTnet.wide$age >= 45 & ARTnet.wide$age <= 54, '45-54',
+                       ifelse(ARTnet.wide$age >= 55 & ARTnet.wide$age <= 65, '55-65',
+                       ifelse(ARTnet.wide$age >= 66, '66+', 'unknown'))))))
+
+addmargins(table(ARTnet.wide$age.cat, useNA = 'always'))
+
+# Race
+addmargins(table(ARTnet.wide$race.cat, useNA = 'always'))
+
+# Census region
+addmargins(table(ARTnet.wide$REGCODE, useNA = 'always'))
+
+# Census division
+addmargins(table(ARTnet.wide$DIVCODE, useNA = 'always'))
+
+# Education
+# Create variable 'HLEDUCAT_2' for new highest level fo education categories
+# 0: High school or below
+# 1: Some college
+# 2: College and above
+# NA: Missing ()
+
+ARTnet.wide$HLEDUCAT_2 <- ifelse(ARTnet.wide$HLEDUCAT <= 3, 0,
+                                 ifelse(ARTnet.wide$HLEDUCAT == 4, 1,
+                                 ifelse(ARTnet.wide$HLEDUCAT == 5, 2, NA)))
+addmargins(table(ARTnet.wide$HLEDUCAT_2, useNA = 'always'))
+
+# Income
+addmargins(table(ARTnet.wide$HHINCOME, useNA = 'always'))
+
+## Partnership-level characteristics
+
+# Partnership type
+addmargins(table(ARTnet.long$ptype, useNA = 'always'))
+
+# Self-reported ongoing status
+addmargins(table(ARTnet.long$ongoing, useNA = 'always'))
 
 ## Calculating 3-month offset alternative approach--------------------------------------------
 # Similar code to the block above calculating mean degree using the day-of-survey
