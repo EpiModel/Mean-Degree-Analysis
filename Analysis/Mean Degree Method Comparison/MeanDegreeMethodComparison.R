@@ -725,13 +725,14 @@ plot_md_comparisons <- function(md_df, cat, labels) {
        total_plot <- ggplot(md_df,
                             aes(x=factor(month_num), y=md_total)) +
                      geom_line() +
-                     geom_point()+
+                     geom_point() +
                      geom_errorbar(
                        aes(ymin=md_total_ll, ymax=md_total_ul),
                        width=.2,
                        position=position_dodge(0.05)) +
                      labs(fill= "Category", title=total_plot_title,
-                          x = "Month Offset", y = "Mean Degree")
+                          x = "Month Offset", y = "Mean Degree") +
+                     ylim(c(0.5, 1.6))
 
        total_plot <- total_plot +
                        geom_hline(aes(yintercept = unique(md_total_dos)),
@@ -761,7 +762,8 @@ plot_md_comparisons <- function(md_df, cat, labels) {
                        position=position_dodge(0.05)) +
                     labs(title=main_plot_title,
                           x = "Month Offset", y = "Mean Degree") +
-                    theme(legend.position = "none")
+                    theme(legend.position = "none") +
+                    ylim(c(0.2, 0.6))
 
        main_plot <- main_plot +
                        geom_hline(aes(yintercept = unique(md_main_dos)),
@@ -790,7 +792,8 @@ plot_md_comparisons <- function(md_df, cat, labels) {
                        position=position_dodge(0.05)) +
                      labs(title=casl_plot_title,
                           x = "Month Offset", y = "Mean Degree") +
-                     theme(legend.position = "none")
+                     theme(legend.position = "none") +
+                     ylim(c(0.3, 1.25))
 
        casl_plot <- casl_plot +
                        geom_hline(aes(yintercept = unique(md_casl_dos)),
@@ -836,7 +839,8 @@ plot_md_comparisons <- function(md_df, cat, labels) {
                      labs(title=total_plot_title,
                           x = "Month Offset", y = "Mean Degree") +
                      scale_color_discrete(name=cat,
-                                          labels=labels)
+                                          labels=labels) +
+                     ylim(c(0.5, 1.6))
 
        main_plot <- ggplot(md_df,
                             aes(x=factor(month_num), y=md_main,
@@ -850,7 +854,8 @@ plot_md_comparisons <- function(md_df, cat, labels) {
                        position=position_dodge(0.05)) +
                      labs(title=main_plot_title,
                           x = "Month Offset", y = "Mean Degree") +
-                     theme(legend.position = "none")
+                     theme(legend.position = "none") +
+                     ylim(c(0.2, 0.6))
 
        casl_plot <- ggplot(md_df,
                             aes(x=factor(month_num), y=md_casl,
@@ -864,7 +869,8 @@ plot_md_comparisons <- function(md_df, cat, labels) {
                        position=position_dodge(0.05)) +
                      labs(title=casl_plot_title,
                           x = "Month Offset", y = "Mean Degree") +
-                     theme(legend.position = "none")
+                     theme(legend.position = "none") +
+                     ylim(c(0.3, 1.25))
 
        require(gridExtra)
        require(cowplot)
@@ -901,11 +907,7 @@ plot_md_comparisons(division, "Census Division",
                       "West South Central",
                       "Mountain",
                       "Pacific"))
-plot_md_comparisons(education, "Highest Level \n of Education",
-                    c("High school or below",
-                      "Some college",
-                      "College and above"))
-plot_md_comparisons(education, "Highest Level \n of Education",
+plot_md_comparisons(education, "Highest Level of Education",
                     c("High school or below",
                       "Some college",
                       "College and above"))
