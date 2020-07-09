@@ -1,88 +1,16 @@
----
-title: | 
- | Mean Degree of Ongoing Partnerships-
- | Day-of-Survey versus Three-Month Offset Method
-header-includes:
-- \usepackage{booktabs}
-- \usepackage{longtable}
-- \usepackage{array}
-- \usepackage{multirow}
-- \usepackage{wrapfig}
-- \usepackage{float}
-- \usepackage{colortbl}
-- \usepackage{pdflscape}
-- \usepackage{tabu}
-- \usepackage{threeparttable}
-- \usepackage{threeparttablex}
-- \usepackage[normalem]{ulem}
-- \usepackage{makecell}
-- \usepackage{xcolor}
-output:
-  pdf_document: default
-  html_document: default
----
-
-```{r setup, include=FALSE}
+## ----setup, include=FALSE--------------------------------------------------------------------------------
 knitr::opts_chunk$set(echo = TRUE)
-```
 
-## Purpose
 
-To compare two methods of determining the mean degree of ongoing casual and main 
-partnerships using response data from the ART-net study.
-
-## Description
-
-Mean degree is an important measure of network connectivity which represents the 
-average number of edges connected to a node/vertex. In this context, mean degree 
-represents the average number of ongoing partners of an individual 
-enrolled in the ART-net study at a point in time.
-The American Men's Internet Survey (AMIS), from which the ART-net study sources 
-data, explicitly asks individuals about ongoing partnerships. Mean degree can be 
-calculated through analysis of the responses to this question as a result. 
-A similar question does not appear on the RADAR survey. As a result, alternate 
-methods may be employed to estimate active and ongoing partnerships to derive 
-the mean degree of individuals in the partnership network.
- 
-## Methods and Results
-
-The ART-Net Survey asks study participants about the number of partners they 
-have had in the past 12 months:  
-
-> In the past 12 months (since the same month last year), with how many different 
-> men have you had either oral or anal sex?
-
-The survey follows up with a question asking about the number of active, ongoing
-sexual partnerships at the time of the survey among all partnerships that have 
-occurred in the past 12 months:
-
-> Next, think of all the men who you are in an active, ongoing sexual relationship 
-> with. By that, we mean that you generally have oral or anal sex at least once per 
-> month and you expect to continue doing so for some time. How many of your 
-> partnerships in the past twelve months are active and ongoing?
-
-As discussed in the description, mean degree can then be directly calculated 
-from the responses to the above questions. 
-I will refer to this as the **day-of-survey method**.
-
-\newpage
-We calculate mean degree using the ARTnet long and wide datasets. 
-The granularity of the ART-net long dataset is the individual partnerships whereas 
-the granularity of the ART-net wide dataset is the surveyed individual. 
-First, the number of ongoing partnerships per individual is assessed using the 
-long dataset. Then, mean degree is calculated by summing ongoing partnerships 
-by surveyed individual and dividing by total surveyed individuals using the 
-wide dataset.
-
-```{r packages, include=FALSE}
+## ----packages, include=FALSE-----------------------------------------------------------------------------
 library(ARTnetData, warn.conflicts=F, quietly=T)
-library(tidyverse, warn.conflicts=F, quietly=T)
+library(dplyr, warn.conflicts=F, quietly=T)
 library(knitr, warn.conflicts=F, quietly=T)
 options(kableExtra.latex.load_packages = FALSE)
 library(kableExtra, warn.conflicts=F, quietly=T)
-```
 
-```{r day_of_survey_md_calc, include=FALSE}
+
+## ----day_of_survey_md_calc, include=FALSE----------------------------------------------------------------
 ARTnet.long$ONGOING <- as.numeric(ARTnet.long$ONGOING)
 ARTnet.long$ongoing2 <- ifelse(is.na(ARTnet.long$ONGOING), 0, 
                                ARTnet.long$ONGOING)
@@ -108,43 +36,19 @@ ARTnet.wide$deg.casl.dos <- ifelse(is.na(ARTnet.wide$deg.casl.dos),
 
 mean.deg.main.dos <- mean(ARTnet.wide$deg.main.dos)
 mean.deg.casl.dos <- mean(ARTnet.wide$deg.casl.dos)
-```
 
-```{r dos_results, echo=FALSE}
+
+## ----dos_results, echo=FALSE-----------------------------------------------------------------------------
 cat("Using the day-of-survey method, the mean degree of main partnerships
-    among individuals in the ART-net dataset is: ", 
+    \n among individuals in the ART-net dataset is: ", 
     round(mean.deg.main.dos,4))
-```
 
-```{r dos_results, echo=FALSE}
 cat("Using the day-of-survey method, the mean degree of casual partnerships
-    among individuals in the ART-net dataset is: ", 
+    \n among individuals in the ART-net dataset is: ", 
     round(mean.deg.casl.dos,4))
-```
 
 
-\newpage
-In contrast, an alternate approach referred to as the **three-month offset method**, 
-for deriving active and ongoing partnerships may also be used in the instance 
-where individuals are not explicitly asked about number of active and ongoing 
-partners at the time of the survey. 
-
-The three-month offset method starts by taking a three-month offset of the 
-survey date. For example, if an individual was surveyed July 15th 2019, then 
-their three-month offset would be April 15th 2019. Once this offset is 
-established for all surveyed individuals, each individual partership is assessed 
-to determine if the three-month offset falls between the start and end date of 
-the partnership. If the three-month offset falls between the partership start 
-and end date, then the partnership is considered active and ongoing; otherwise, 
-it is not considered active and ongoing.
-
-![Three-Month Offset Method Data Scenario](Mean Degree of Ongoing Partnerships - Three-Month Offset Method Data Scenario.png)
-\newpage
-Similar code to the block above calculating mean degree using the day-of-survey
-method is used to calculate mean degree assessing ongoing partnerships using 
-this three-month offset method.
-
-```{r three_month, include=FALSE}
+## ----three_month, include=FALSE--------------------------------------------------------------------------
 prior.month.of.evaluation <- 3
 ARTnet.long$ongoing.evaluation.date <- ARTnet.long$SUB_DATE - 
   round(prior.month.of.evaluation*30.44)
@@ -174,28 +78,19 @@ ARTnet.wide$deg.casl.three.month <- ifelse(is.na(ARTnet.wide$deg.casl.three.mont
 
 mean.deg.main.three.month <- mean(ARTnet.wide$deg.main.three.month)
 mean.deg.casl.three.month <- mean(ARTnet.wide$deg.casl.three.month)
-```
 
-```{r three_month_results, echo=FALSE}
+
+## ----three_month_results, echo=FALSE---------------------------------------------------------------------
 cat("Using the three-month offset method, the mean degree of main partnerships 
-    among individuals in the ART-net dataset is: ", 
+    among\n individuals in the ART-net dataset is: ", 
     round(mean.deg.main.three.month,4))
-```
 
-
-```{r three_month_results, echo=FALSE}
 cat("Using the three-month offset method, the mean degree of casual partnerships 
-    among individuals in the ART-net dataset is: ", 
+    among\n individuals in the ART-net dataset is: ", 
     round(mean.deg.casl.three.month,4))
-```
 
 
-\newpage
-Here are the results comparing mean degree by partnership type (main or casual) 
-and method of determining ongoing partnerships (day-of-survey or three-month offset) 
-in table form:
-
-```{r comparison, warning=FALSE, echo=FALSE}
+## ----comparison, warning=FALSE, echo=FALSE---------------------------------------------------------------
 
 Partnership.Type <- rbind(c("Main"),c("Casual"))
 
@@ -216,9 +111,9 @@ mean.degree.df <- rbind(mean.degree.df, mean.degree.main, mean.degree.casl)
 
 mean.degree.df
 
-```
 
-```{r comparison_final, warning=FALSE, echo=FALSE}
+
+## ----comparison_final, warning=FALSE, echo=FALSE---------------------------------------------------------
 mean.degree.df.final <- data.frame(matrix(ncol = 3, nrow = 0))
 colnames(mean.degree.df.final) <- c("Type","Day-of-Survey","Three.Month")
 
@@ -227,28 +122,9 @@ mean.degree.df.final <- cbind(Partnership.Type, mean.degree.df)
 kable(mean.degree.df.final) %>%
   kable_styling(bootstrap_options = "striped", font_size = 12)
 
-```
 
-The mean degree by partnership type calculated using the day-of-survey and 
-three-month offset methods are similar.
 
-Next, instead of assessing ongoing partnerships using a three-month offset, we 
-can generalize our approach to look at n-month offsets for user specified values 
-of n.
-
-For the purpose of this example, we assessed ongoing partnerships with one- to 
-twelve- month offsets and reviewed how mean degree would change depending on 
-months of offset.
-
-The pairs of plots below show how mean degree changes depending on number of 
-months of offset used for determination of whether or not a partnership is ongoing. 
-The plots show the same data, with the second pair of plots showing the results 
-at larger scale.
-
-The data may also be viewed in the table below the pair of plots.
-
-\newpage
-```{r generalized_month_offset, echo=FALSE}
+## ----generalized_month_offset, echo=FALSE----------------------------------------------------------------
 ##N-Month Offset Method
 
 # Specify start and end months for offsets
@@ -334,9 +210,9 @@ for (i in start_month_offset:end_month_offset) {
                                 "deg.casl.n.month"] <- deg.casl.n.month.name
 
 }
-```
 
-```{r plots_tables, fig.align='center', fig.height=8, echo=FALSE}
+
+## ----plots_tables, fig.align='center', fig.height=8, echo=FALSE------------------------------------------
 # RESULTS
 
 par(mfrow=c(2,2))
@@ -424,24 +300,9 @@ mean.degree.table <- cbind(dos_ref_col, mean.degree.table)
 kable(mean.degree.table) %>%
   kable_styling(bootstrap_options = "striped", font_size = 6)
 
-```
 
 
-Below is a helper function to determine mean degree by month by some categorical 
-variable.
-
-To view overall mean degree using day-of-survey compared with n-month offset for 
-offset months 0-12, use: 
-`n_month_offset(0, 12, filter_var='all', output_type='df')`
-
-To view mean degree by n-month offset by race, use: 
-`n_month_offset(0, 12, filter_var='race.cat', output_type='df')`
-
-Below, we evaluate mean degree by n-month offset overall (filter_var='all'), 
-by race (race.cat), by age (age.cat), and by geography (city) classifications 
-and plot their results using the `plot_md_comparisons` helper function.
-
-```{r generalized_month_offset_function, echo=FALSE}
+## ----generalized_month_offset_function, echo=FALSE-------------------------------------------------------
 ##N-Month Offset Method
 # Note: Only single month steps are supported
 
@@ -754,19 +615,9 @@ city <- n_month_offset(0,12,'city')
 # write.xlsx(age.cat, 'C:/Users/conno/OneDrive/Documents/Rollins/Semester 4 - Spring 2020/EPI 570 - Infectious Disease Dynamics/output.xlsx', sheetName = "age.cat", col.names = TRUE, append = FALSE)
 # write.xlsx(city, 'C:/Users/conno/OneDrive/Documents/Rollins/Semester 4 - Spring 2020/EPI 570 - Infectious Disease Dynamics/output.xlsx', sheetName = "city", col.names = TRUE, append = FALSE)
 
-```
 
-The plot_md_comparisons then uses the data frames generated from the n_month_offset function to plot comparisons of mean degree by day of survey and n-month offset for specified month offset ranges.
 
-It can be used as follows:
-plot_md_comparisons(all)
-plot_md_comparisons(race.cat)
-plot_md_comparisons(age.cat)
-plot_md_comparisons(city)
-
-Results from the function are below.
-
-```{r plots, echo=FALSE}
+## ----plots, echo=FALSE-----------------------------------------------------------------------------------
 
 plot_md_comparisons <- function(md_df) {
     
@@ -923,36 +774,9 @@ plot_md_comparisons(all)
 plot_md_comparisons(race.cat)
 plot_md_comparisons(age.cat)
 plot_md_comparisons(city)
-```
 
-There was additional discussion around visualizing the data by presenting the slope of mean degree decline with additional months of offset from the survey date. This can be achieved by manipulating the data frames output from the n_month_offset function which gives mean degree by day of survey and mean degree by month of offset. 
 
-Here again is an example for the function:
-
-`df <- n_month_offset(0, 12, filter_var='all', output_type='df')`
-
-`df`
-
-# Investigation
-
-## Day-of-Survey and Zero Month Offset Result Differences
-
-If a partnership is indicated as ongoing, then the end date of the partnership 
-should be set to the date of the survey administration. But it appears that 
-there is a higher mean degree using the zero month offset versus the 
-day-of-survey method.
-
-From the plot results of the mean degree comparison for overall total, main, 
-and casual partnerships, we see that mean degree for zero month offset method 
-does not equal mean degree for day of survey.
-
-We would like to investigate the possible mechanisms behind this phenomonon.
-
-We will start by gathering a list of ARTnet.wide partnerships that have 
-mismatches when evaluating zero-month offset mean degree and day-of-survey 
-mean degree.
-
-```{r investigation_zero_month, echo = FALSE}
+## ----investigation_zero_month, echo = FALSE--------------------------------------------------------------
 library(ARTnetData)
 library(tidyverse)
 
@@ -996,40 +820,27 @@ ARTnet.wide$deg.main.zero.month.offset <- ifelse(is.na(
 ARTnet.wide$deg.casl.zero.month.offset <- ifelse(is.na(
   ARTnet.wide$deg.casl.zero.month.offset), 
                                    0, ARTnet.wide$deg.casl.zero.month.offset)
-```
 
-Here we find AMIS_IDs for egos where the day of survey partnership degree and 
-the zero month offset partnership degree do not match.
 
-There are 19 egos that have higher degree using the day of survey method versus 
-the month offset method.
-
-```{r dos_zmo_comparison1, echo = FALSE}
+## ----dos_zmo_comparison1, echo = FALSE-------------------------------------------------------------------
 
 ARTnet.wide %>% 
   select(AMIS_ID, deg.casl.dos, deg.casl.zero.month.offset, deg.main.dos, deg.main.zero.month.offset)%>%
   filter(deg.casl.dos > deg.casl.zero.month.offset | deg.main.dos > 
            deg.main.zero.month.offset)
 
-```
 
-There are 308 egos that have higher degree using the month offset method than 
-the day of survey method.
 
-```{r dos_zmo_comparison2, echo=FALSE}
+## ----dos_zmo_comparison2, echo=FALSE---------------------------------------------------------------------
 
 ARTnet.wide %>% 
   select(AMIS_ID, deg.casl.dos, deg.casl.zero.month.offset, deg.main.dos, deg.main.zero.month.offset)%>%
   filter(deg.casl.dos < deg.casl.zero.month.offset | deg.main.dos < 
            deg.main.zero.month.offset)
 
-```
 
-There are 336 partnerships considered active and ongoing using the zero-month 
-offset method but not using the day-of-survey method where partnership end date 
-equals the date of survey administration.
 
-```{r dos_zmo_comparison3, echo=FALSE}
+## ----dos_zmo_comparison3, echo=FALSE---------------------------------------------------------------------
 
 ARTnet.wide %>% 
   select(AMIS_ID, deg.casl.dos, deg.casl.zero.month.offset, deg.main.dos, deg.main.zero.month.offset)%>%
@@ -1038,11 +849,9 @@ ARTnet.wide %>%
   select(AMIS_ID, ptype, start.date, end.date, SUB_DATE, ongoing2, ongoing3)%>%
   filter(ongoing2 != ongoing3 & ptype %in% c(1,2) & SUB_DATE == end.date)
 
-```
 
-Here is an addiitonal subset for a small selection of AMIS IDs:
 
-```{r dos_zmo_comparison4, echo=FALSE}
+## ----dos_zmo_comparison4, echo=FALSE---------------------------------------------------------------------
 
 ARTnet.wide %>% 
   select(AMIS_ID, deg.casl.dos, deg.casl.zero.month.offset, deg.main.dos, deg.main.zero.month.offset)%>%
@@ -1056,22 +865,9 @@ ARTnet.long %>%
 
 mean.deg.main.dos <- mean(ARTnet.wide$deg.main.dos)
 mean.deg.casl.dos <- mean(ARTnet.wide$deg.casl.dos)
-```
 
-We also construct a line plot visualizing, by partnership type, the partnership 
-start and end date to better understand the anticline in mean degree as the 
-month of offset from the day of survey increases.
 
-Each line represents a partnership, with red lines representing main partnerships 
-and blue lines representing casual partnerships.
-
-We see that there are fewer main and casual partnerships as the days offset from 
-the day of survey increases.
-
-NOTE: There was concern with the output of this plot.
-Need to investigate the plot for a small subset of AMIS_IDs
-
-```{r lineplot, echo=FALSE}
+## ----lineplot, echo=FALSE--------------------------------------------------------------------------------
 
 df <- ARTnet.long %>% 
   filter(RAI == 1 | IAI == 1 | ROI == 1 | IOI == 1) %>%
@@ -1096,9 +892,8 @@ plot + geom_segment(aes(x = end.date.dos.ref, y = UID_INV, xend =
                           start.date.dos.ref, yend =
                           UID_INV, color = ptype_char), data = df)
 
-```
 
 
-```{r}
+## --------------------------------------------------------------------------------------------------------
 knitr::purl("Mean Degree Method Comparison - Report.Rmd")
-```
+
