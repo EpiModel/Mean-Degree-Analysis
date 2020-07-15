@@ -4,11 +4,16 @@
 
 ## Load Data and Packages---------------------------------------------------------------------
 library(ARTnetData, warn.conflicts=F, quietly=T)
-library(tidyverse, warn.conflicts=F, quietly=T)
+library(dplyr, warn.conflicts=F, quietly=T)
 library(knitr, warn.conflicts=F, quietly=T)
 options(kableExtra.latex.load_packages = FALSE)
 library(kableExtra, warn.conflicts=F, quietly=T)
+library(lubridate)
+library(gridExtra)
+library(cowplot)
+library(ggplot2)
 
+# rm(list = ls())
 
 ## Calculate mean degree using "day-of-survey" method-----------------------------------------
 ## day_of_survey_md_calc
@@ -21,48 +26,28 @@ library(kableExtra, warn.conflicts=F, quietly=T)
 # by surveyed individual and dividing by total surveyed individuals using the
 # wide dataset.
 
-
 # Load long data
 ARTnet.long$ONGOING <- as.numeric(ARTnet.long$ONGOING)
 ARTnet.long$ongoing2 <- ifelse(is.na(ARTnet.long$ONGOING), 0, #set 3017 missing values to not ongoing
                                ARTnet.long$ONGOING)
 
+# Randomly impute days (1-30) for start dates and end dates that are not equal to SUB_DATE
+set.seed(12345)
 
-# Add main partnerships data to wide dataset
-ARTnet.wide <- ARTnet.long %>%
-  filter(RAI == 1 | IAI == 1 | ROI == 1 | IOI == 1) %>%
-  filter(ptype == 1) %>%
-  group_by(AMIS_ID) %>%
-  summarise(deg.main.dos = sum(ongoing2)) %>%
-  right_join(ARTnet.wide, by = "AMIS_ID")
+ARTnet.long$start.date.2 <- ARTnet.long$start.date
+ARTnet.long$end.date.2 <- ARTnet.long$end.date
 
-# Add casual partnerships data to wide dataset
-ARTnet.wide <- ARTnet.long %>%
-  filter(RAI == 1 | IAI == 1 | ROI == 1 | IOI == 1) %>%
-  filter(ptype == 2) %>%
-  group_by(AMIS_ID) %>%
-  summarise(deg.casl.dos = sum(ongoing2)) %>%
-  right_join(ARTnet.wide, by = "AMIS_ID")
+for (i in 1:nrow(ARTnet.long)) {
 
-# Set 2557 missing values for degree of main relationships to 0
-ARTnet.wide$deg.main.dos <- ifelse(is.na(ARTnet.wide$deg.main.dos),
-                                   0, ARTnet.wide$deg.main.dos)
+  day(ARTnet.long[i,"start.date.2"]) <- sample(1:30, size=1, replace = T)
 
-# Set 2049 missing values for degree of casual relationships to 0
-ARTnet.wide$deg.casl.dos <- ifelse(is.na(ARTnet.wide$deg.casl.dos),
-                                   0, ARTnet.wide$deg.casl.dos)
+  day(ARTnet.long[i,"end.date.2"]) <- ifelse(day(ARTnet.long[i,"end.date"]) != day(ARTnet.long[i,"SUB_DATE"]),
+                                             sample(1:30, size=1, replace = T), day(ARTnet.long[i,"end.date.2"]))
 
-# Calculated results
-mean.deg.main.dos <- mean(ARTnet.wide$deg.main.dos)
-mean.deg.casl.dos <- mean(ARTnet.wide$deg.casl.dos)
+  }
 
-cat("Using the day-of-survey method, the mean degree of main partnerships
-    \n among individuals in the ART-net dataset is: ",
-    round(mean.deg.main.dos,4))
-
-cat("Using the day-of-survey method, the mean degree of casual partnerships
-    \n among individuals in the ART-net dataset is: ",
-    round(mean.deg.casl.dos,4))
+summary(day(ARTnet.long$start.date.2))
+summary(day(ARTnet.long$end.date.2))
 
 ## Table 1 -----------------------------------------------------------------------------------
 
@@ -102,6 +87,10 @@ addmargins(table(ARTnet.wide$HLEDUCAT_2, useNA = 'always'))
 # Income
 addmargins(table(ARTnet.wide$HHINCOME, useNA = 'always'))
 
+ARTnet.wide$HHINCOME_2 <- ifelse(ARTnet.wide$HHINCOME >= 77, NA, ARTnet.wide$HHINCOME)
+
+addmargins(table(ARTnet.wide$HHINCOME_2, useNA = 'always'))
+
 ## Partnership-level characteristics
 
 # Partnership type
@@ -110,269 +99,13 @@ addmargins(table(ARTnet.long$ptype, useNA = 'always'))
 # Self-reported ongoing status
 addmargins(table(ARTnet.long$ongoing, useNA = 'always'))
 
-## Calculating 3-month offset alternative approach--------------------------------------------
-# Similar code to the block above calculating mean degree using the day-of-survey
-# method is used to calculate mean degree assessing ongoing partnerships using
-# this three-month offset method.
-
-prior.month.of.evaluation <- 3
-ARTnet.long$ongoing.evaluation.date <- ARTnet.long$SUB_DATE -
-  round(prior.month.of.evaluation*30.44)
-ARTnet.long$ongoing3 <- ifelse(ARTnet.long$start.date <
-                                 ARTnet.long$ongoing.evaluation.date &
-                                 ARTnet.long$end.date >=
-                                 ARTnet.long$ongoing.evaluation.date, 1, 0)
-
-ARTnet.wide <- ARTnet.long %>%
-  filter(RAI == 1 | IAI == 1 | ROI == 1 | IOI == 1) %>%
-  filter(ptype == 1) %>%
-  group_by(AMIS_ID) %>%
-  summarise(deg.main.three.month = sum(ongoing3)) %>%
-  right_join(ARTnet.wide, by = "AMIS_ID")
-
-ARTnet.wide <- ARTnet.long %>%
-  filter(RAI == 1 | IAI == 1 | ROI == 1 | IOI == 1) %>%
-  filter(ptype == 2) %>%
-  group_by(AMIS_ID) %>%
-  summarise(deg.casl.three.month = sum(ongoing3)) %>%
-  right_join(ARTnet.wide, by = "AMIS_ID")
-
-# Set 2560 missing mean degree for main partnerships (3mo offset) to 0
-ARTnet.wide$deg.main.three.month <- ifelse(is.na(ARTnet.wide$deg.main.three.month),
-                                           0, ARTnet.wide$deg.main.three.month)
-
-# Set 2064 missing mean degree for main partnerships (3mo offset) to 0
-ARTnet.wide$deg.casl.three.month <- ifelse(is.na(ARTnet.wide$deg.casl.three.month),
-                                           0, ARTnet.wide$deg.casl.three.month)
-
-# Calculated results
-mean.deg.main.three.month <- mean(ARTnet.wide$deg.main.three.month)
-mean.deg.casl.three.month <- mean(ARTnet.wide$deg.casl.three.month)
-
-cat("Using the three-month offset method, the mean degree of main partnerships
-    among individuals in the ART-net dataset is: ",
-    round(mean.deg.main.three.month,4))
-
-cat("Using the three-month offset method, the mean degree of casual partnerships
-    among individuals in the ART-net dataset is: ",
-    round(mean.deg.casl.three.month,4))
-
-
-# Here are the results comparing mean degree by partnership type (main or casual)
-# and method of determining ongoing partnerships (day-of-survey or three-month offset)
-# in table form:
-
-Partnership.Type <- rbind(c("Main"),c("Casual"))
-
-mean.degree.main <- ARTnet.wide %>%
-  summarize(mean.deg.main.dos = round(mean(ARTnet.wide$deg.main.dos),4),
-            mean.deg.main.three.month = round(mean(ARTnet.wide$deg.main.three.month),4))
-colnames(mean.degree.main) <- c("Day-of-Survey", "Three-Month")
-
-mean.degree.casl <- ARTnet.wide %>%
-  summarize(mean.deg.casl.dos = round(mean(ARTnet.wide$deg.casl.dos),4),
-            mean.deg.casl.three.month = round(mean(ARTnet.wide$deg.casl.three.month),4))
-colnames(mean.degree.casl) <- c("Day-of-Survey", "Three-Month")
-
-mean.degree.df <- data.frame(matrix(ncol = 2, nrow = 0))
-colnames(mean.degree.df) <- c("Day-of-Survey", "Three-Month")
-
-mean.degree.df <- rbind(mean.degree.df, mean.degree.main, mean.degree.casl)
-
-mean.degree.df
-
-mean.degree.df.final <- data.frame(matrix(ncol = 3, nrow = 0))
-colnames(mean.degree.df.final) <- c("Type","Day-of-Survey","Three.Month")
-
-mean.degree.df.final <- cbind(Partnership.Type, mean.degree.df)
-
-kable(mean.degree.df.final) %>%
-  kable_styling(bootstrap_options = "striped", font_size = 12)
-
-
-## N-Month Offset Method-----------------------------------------------------------------------
-
-#Next, instead of assessing ongoing partnerships using a three-month offset, we
-#can generalize our approach to look at n-month offsets for user specified values
-#of n.
-
-# Specify start and end months for offsets
-# Note: Only single month steps are supported
-start_month_offset <- 0
-end_month_offset <- 12
-
-month <- seq(start_month_offset, end_month_offset)
-n_month <- paste(month, "M", sep="")
-
-# Initalize data frames with appropriate row and column dimensions
-ongoing.eval.m <- matrix(nrow = length(ARTnet.long$SUB_DATE),
-                         ncol = end_month_offset - start_month_offset + 1)
-ongoing.eval.df <- data.frame(ongoing.eval.m)
-
-ongoing3.m <- matrix(nrow = length(ARTnet.long$SUB_DATE),
-                     ncol = end_month_offset - start_month_offset + 1)
-ongoing3.df <- data.frame(ongoing3.m)
-
-ARTnet.long.adjusted <- ARTnet.long
-ARTnet.wide.adjusted <- ARTnet.wide
-
-mean.degree.main <- c()
-mean.degree.casual <- c()
-
-for (i in start_month_offset:end_month_offset) {
-
-  ongoing.eval <- paste("ongoing.evaluation.date.m",i,sep="")
-  names(ongoing.eval.df)[i - start_month_offset + 1] <- ongoing.eval
-  assign(ongoing.eval, ARTnet.long$SUB_DATE - round(i*30.44))
-  ongoing.eval.df[,i - start_month_offset + 1] <- get(ongoing.eval)
-
-  ongoing3 <- paste("ongoing3.m",i,sep="")
-  names(ongoing3.df)[i - start_month_offset + 1] <- ongoing3
-  assign(ongoing3, ifelse(is.na(ifelse(ARTnet.long.adjusted$start.date <
-                                         get(ongoing.eval) &
-                            ARTnet.long.adjusted$end.date >= get(ongoing.eval),
-                          1, 0)), 0, ifelse(ARTnet.long.adjusted$start.date <
-                                              get(ongoing.eval) &
-                            ARTnet.long.adjusted$end.date >= get(ongoing.eval),
-                          1, 0)))
-  ongoing3.df[,i - start_month_offset + 1] <- get(ongoing3)
-
-  ARTnet.long.adjusted <- cbind(ARTnet.long.adjusted,
-                                ongoing.eval.df[i - start_month_offset + 1],
-                                ongoing3.df[i - start_month_offset + 1])
-
-  ARTnet.wide.adjusted <- ARTnet.long.adjusted %>%
-    filter(RAI == 1 | IAI == 1 | ROI == 1 | IOI == 1) %>%
-    filter(ptype == 1) %>%
-    group_by(AMIS_ID) %>%
-    summarise(deg.main.n.month = sum(get(paste("ongoing3.m",i,sep="")))) %>%
-    right_join(ARTnet.wide.adjusted, by = "AMIS_ID")
-
-  # #Additional filtering
-  # ARTnet.wide.adjusted <- ARTnet.wide.adjusted %>%
-  #   filter(age >= 16 & age <= 29) %>%
-  #   filter(city2 == "Chicago")
-
-  ARTnet.wide.adjusted$deg.main.n.month <- ifelse(is.na(
-    ARTnet.wide.adjusted$deg.main.n.month), 0,
-    ARTnet.wide.adjusted$deg.main.n.month)
-  mean.degree.main[i - start_month_offset + 1] <- mean(
-    ARTnet.wide.adjusted$deg.main.n.month)
-  deg.main.n.month.name <- paste("deg.main.n.month.m",i,sep="")
-  names(ARTnet.wide.adjusted)[names(ARTnet.wide.adjusted) ==
-                                "deg.main.n.month"] <- deg.main.n.month.name
-
-  ARTnet.wide.adjusted <- ARTnet.long.adjusted %>%
-    filter(RAI == 1 | IAI == 1 | ROI == 1 | IOI == 1) %>%
-    filter(ptype == 2) %>%
-    group_by(AMIS_ID) %>%
-    summarise(deg.casl.n.month = sum(get(paste("ongoing3.m",i,sep="")))) %>%
-    right_join(ARTnet.wide.adjusted, by = "AMIS_ID")
-
-  ARTnet.wide.adjusted$deg.casl.n.month <- ifelse(is.na(
-    ARTnet.wide.adjusted$deg.casl.n.month), 0,
-    ARTnet.wide.adjusted$deg.casl.n.month)
-  mean.degree.casual[i - start_month_offset + 1] <- mean(
-    ARTnet.wide.adjusted$deg.casl.n.month)
-  deg.casl.n.month.name <- paste("deg.casl.n.month.m",i,sep="")
-  names(ARTnet.wide.adjusted)[names(ARTnet.wide.adjusted) ==
-                                "deg.casl.n.month"] <- deg.casl.n.month.name
-
-}
-
-
-# RESULTS ------------------------------------------------------------------------------------
-
-par(mfrow=c(2,2))
-
-plot(month, mean.degree.main,
-     main = "\n\n\nMain Partnerships",
-     xlab = "Number of Offset Months",
-     ylab = "Mean Degree",
-     ylim = c(0,1),
-     cex.main = 0.8)
-abline(h=mean.deg.main.dos, col="blue", xlim = c())
-text(0.45*(end_month_offset - start_month_offset),
-     1.12*mean.deg.main.dos,
-     paste("Mean Degree:\nDay-of-Survey Method = ",round(mean.deg.main.dos,4),
-           sep=""),
-     cex = 0.8,
-     adj = 0)
-
-plot(month, mean.degree.casual,
-     main = "\n\n\nCasual Partnerships",
-     xlab = "Number of Offset Months",
-     ylab = "Mean Degree",
-     ylim = c(0,1),
-     cex.main = 0.8)
-lines(mean.deg.casl.dos)
-abline(h=mean.deg.casl.dos, col="purple")
-text(0.45*(end_month_offset - start_month_offset),
-     1.1*mean.deg.casl.dos,
-     paste("Mean Degree:\nDay-of-Survey Method = ",round(mean.deg.casl.dos,4),
-           sep=""),
-     cex = 0.8,
-     adj = 0)
-mtext("Partnership Mean Degree", side = 3, line = -1, outer = TRUE, font = 2)
-mtext("N-Month Offset Method - Points, Day-of-Survey Method - Line", side = 3,
-      line = -2, outer = TRUE, font = 2, cex = 0.75)
-
-plot(month, mean.degree.main,
-     main = "Main Partnerships - Scaled",
-     xlab = "Number of Offset Months",
-     ylab = "Mean Degree",
-     cex.main = 0.8)
-abline(h=mean.deg.main.dos, col="blue")
-text(0.3*(end_month_offset - start_month_offset),
-     0.99*mean.deg.main.dos,
-     paste("Mean Degree:\nDay-of-Survey Method = ",round(mean.deg.main.dos,4),sep=""),
-     cex = .8,
-     adj = 0)
-
-plot(month, mean.degree.casual,
-     main = "Casual Partnerships - Scaled",
-     xlab = "Number of Offset Months",
-     ylab = "Mean Degree",
-     cex.main = 0.8)
-lines(mean.deg.casl.dos)
-abline(h=mean.deg.casl.dos, col="purple")
-text(0.45*(end_month_offset - start_month_offset),
-     1.01*mean.deg.casl.dos,
-     paste("Mean Degree:\nDay-of-Survey Method = ",round(mean.deg.casl.dos,4),
-           sep=""),
-     cex = .8,
-     adj = 0)
-
-#par(xpd = TRUE)
-#text(par("usr")[2] - 18,y=mean(par("usr")[3:4]) + 0,"test taxis label",srt=-270)
-
-#Mean degree - main
-mean.degree.main.df <- data.frame(n_month, round(mean.degree.main,4))
-
-#Mean degree - casual
-mean.degree.casual.df <- data.frame(n_month, round(mean.degree.casual,4))
-
-mean.degree.table <- mean.degree.main.df %>%
-  left_join(mean.degree.casual.df, by = "n_month")
-colnames(mean.degree.table) <- c("Month", "Main", "Casual")
-
-mean.degree.table <- setNames(data.frame(t(mean.degree.table[,-1])),
-                              mean.degree.table[,1])
-
-dos_ref_col <- rbind(c(round(mean.deg.main.dos,4)),c(round(
-  mean.deg.casl.dos,4)))
-colnames(dos_ref_col) <- c("Day-of-Survey")
-
-mean.degree.table <- cbind(dos_ref_col, mean.degree.table)
-
-kable(mean.degree.table) %>%
-  kable_styling(bootstrap_options = "striped", font_size = 6)
-
-
+# Mean (SD) duration of partnership
+mean(ARTnet.long$duration, na.rm = T)
+sd(ARTnet.long$duration, na.rm = T)
 
 ## generalized_month_offset_function---------------------------------------------------------
 
-#B elow is a helper function to determine mean degree by month by some categorical
+# Below is a helper function to determine mean degree by month by some categorical
 # variable.
 
 # To view overall mean degree using day-of-survey compared with n-month offset for
@@ -389,14 +122,11 @@ kable(mean.degree.table) %>%
 ## N-Month Offset Method
 # Note: Only single month steps are supported
 
-n_month_offset2 <- function(start_month, end_month, filter_var='all',
+n_month_offset <- function(start_month, end_month, filter_var='all',
                            output_type='df') {
 
-  # pre-set start_month and end_month; filter_var and output_type
-  #start_month <- 0
-  #end_month <- 12
-  #filter_var <- 'all' #can change variables here to race.cat, age.cat, etc.
-  #output_type <- 'df'
+  #Create Dummy Variable 'All' to Filter for all records
+  ARTnet.wide$all <- rep(1,nrow(ARTnet.wide))
 
   #Initialize matrices for storing by-month mean degree calculations
   #these matrices will turn into the columns that we see in the tables
@@ -453,16 +183,18 @@ n_month_offset2 <- function(start_month, end_month, filter_var='all',
     ARTnet.long.adjusted2 <- ARTnet.long
     ARTnet.wide.adjusted2 <- ARTnet.wide
 
-    #not sure where the J comes in yet
-
     for (i in start_month_offset:end_month_offset) {
-#sensitivity analysis code would go somewhere here?
 
       ongoing.eval <- paste("ongoing.evaluation.date.m",i,sep="")
       names(ongoing.eval.df)[i - start_month_offset + 1] <- ongoing.eval
       assign(ongoing.eval, ARTnet.long$SUB_DATE - round(i*30.44))
       ongoing.eval.df[,i - start_month_offset + 1] <- get(ongoing.eval)
 
+      # this code calculates whether degree is 1 or 0 at specific N-month offset for each partnership
+      # if N-month offset date falls within partnership duration then 1
+      # if partnerships start OR end on N-month offset date then 1
+      # keep in mind that start dates are based on reported Month/Year and days are imputed to 15th of the month
+      # end dates are also imputed to 15th day of each month unless partnership is ongoing and end date is set to day of survey
       ongoing4 <- paste("ongoing4.m",i,sep="")
       names(ongoing4.df)[i - start_month_offset + 1] <- ongoing4
       assign(ongoing4, ifelse(is.na(ifelse(ARTnet.long.adjusted2$start.date <=
@@ -492,9 +224,8 @@ n_month_offset2 <- function(start_month, end_month, filter_var='all',
         filter(UQ(as.symbol(filter_var)) == unique_filter_var[j])
 
       ARTnet.wide.adjusted2$deg.total.dos <- ifelse(is.na(
-        ARTnet.wide.adjusted2$deg.total.dos),
-        0,
-        ARTnet.wide.adjusted2$deg.total.dos)
+          ARTnet.wide.adjusted2$deg.total.dos), 0,
+          ARTnet.wide.adjusted2$deg.total.dos)
       ARTnet.wide.adjusted2$deg.total.n.month <-
         ifelse(is.na(ARTnet.wide.adjusted2$deg.total.n.month),
                0, ARTnet.wide.adjusted2$deg.total.n.month)
@@ -522,9 +253,8 @@ n_month_offset2 <- function(start_month, end_month, filter_var='all',
       ARTnet.wide.adjusted2 <- ARTnet.wide.adjusted2 %>%
         filter(UQ(as.symbol(filter_var)) == unique_filter_var[j])
 
-      ARTnet.wide.adjusted2$deg.main.dos <- ifelse(is.na(
-        ARTnet.wide.adjusted2$deg.main.dos),
-        0, ARTnet.wide.adjusted2$deg.main.dos)
+      ARTnet.wide.adjusted2$deg.main.dos <- ifelse(is.na(ARTnet.wide.adjusted2$deg.main.dos),
+                                                      0, ARTnet.wide.adjusted2$deg.main.dos)
       ARTnet.wide.adjusted2$deg.main.n.month <- ifelse(is.na(ARTnet.wide.adjusted2$deg.main.n.month),
                                                       0, ARTnet.wide.adjusted2$deg.main.n.month)
       mean.degree.main[j, i - start_month_offset + 1] <-
@@ -630,12 +360,12 @@ n_month_offset2 <- function(start_month, end_month, filter_var='all',
       md_casl <- c(md_casl, out$casual$md[i,])
       md_casl_dos <- c(md_casl_dos, out$casual$md.dos[i,])
       num <- c(num, out$main$n[i,])
+
     }
 
     var_name <- rep(filter_var,length(names(out$main$md[,1]))*length(n_month))
     month_num <- rep(month,length(names(out$main$md[,1])))
     month <- rep(n_month,length(names(out$main$md[,1])))
-
 
   } else {
 
@@ -653,7 +383,6 @@ n_month_offset2 <- function(start_month, end_month, filter_var='all',
 
   }
 
-  #double-check the 95% CI calculation
   md_total_ll <- md_total - 1.96 * sqrt(md_total/num)
   md_total_ul <- md_total + 1.96 * sqrt(md_total/num)
   md_total_dos_ll <- md_total_dos - 1.96 * sqrt(md_total_dos/num)
@@ -680,14 +409,13 @@ n_month_offset2 <- function(start_month, end_month, filter_var='all',
          return(out),
          return(out_df))
 
-}
+  }
 
 # Examples
 
 all <- n_month_offset(0,12)
 race.cat <- n_month_offset(0,12,'race.cat')
 age.cat <- n_month_offset(0,12,'age.cat')
-division <- n_month_offset(0,12,'DIVCODE')
 region <- n_month_offset(0,12,'REGCODE')
 income <- n_month_offset(0,12,'HHINCOME')
 income <- income %>% filter(!is.na(var_val) &
@@ -798,7 +526,7 @@ plot_md_comparisons <- function(md_df, cat, labels) {
          unique(md_df$month_num)),
                                                    labels = unique(md_df$month))
 
-       require(gridExtra)
+       #require(gridExtra)
        suppressMessages(grid.arrange(total_plot, main_plot, casl_plot, nrow=3))
 
       } else {
@@ -874,8 +602,8 @@ plot_md_comparisons <- function(md_df, cat, labels) {
              aes(yintercept = md_casl_dos, col = var_val),
              linetype = "dashed")
 
-       require(gridExtra)
-       require(cowplot)
+       #require(gridExtra)
+       #require(cowplot)
        legend <- get_legend(total_plot)
        total_plot <- total_plot + theme(legend.position = "none")
        grid.arrange(arrangeGrob(total_plot, main_plot, casl_plot), legend, ncol=2,
@@ -899,16 +627,6 @@ plot_md_comparisons(region, "Census Region",
                       "Midwest",
                       "South",
                       "West"))
-plot_md_comparisons(division, "Census Division",
-                    c("New England",
-                      "Middle Atlantic",
-                      "East North Central",
-                      "West North Central",
-                      "South Atlantic",
-                      "East South Central",
-                      "West South Central",
-                      "Mountain",
-                      "Pacific"))
 plot_md_comparisons(education, "Highest Level of Education",
                     c("High school or below",
                       "Some college",
@@ -920,120 +638,148 @@ plot_md_comparisons(income, "Annual Household Income",
                       "$75,000 or more"))
 
 
-## investigation_zero_month------------------------------------------------------------------
+# Linear Regression ------------------------------------------------------------------------
 
-# The code below investigates why the 0-month offset yields a higher mean degree compared to the DoS method.
+# Create object ARTnet.wide.adjusted for analysis by using code found in N-month offset function
 
-ARTnet.long$ONGOING <- as.numeric(ARTnet.long$ONGOING)
-ARTnet.long$ongoing2 <- ifelse(is.na(ARTnet.long$ONGOING), 0,
-                               ARTnet.long$ONGOING)
+# Specify start and end months for offsets
+# Note: Only single month steps are supported
+start_month_offset <- 0
+end_month_offset <- 12
 
-prior.month.of.evaluation <- 0
-ARTnet.long$ongoing.evaluation.date <- ARTnet.long$SUB_DATE -
-  round(prior.month.of.evaluation*30.44)
-ARTnet.long$ongoing3 <- ifelse(ARTnet.long$start.date <
-                                 ARTnet.long$ongoing.evaluation.date &
-                                 ARTnet.long$end.date >=
-                                 ARTnet.long$ongoing.evaluation.date, 1, 0)
-ARTnet.long$ongoing3 <- ifelse(is.na(ARTnet.long$ongoing3), 0,
-                               ARTnet.long$ongoing3)
+month <- seq(start_month_offset, end_month_offset)
+n_month <- paste(month, "M", sep="")
 
-ARTnet.wide <- ARTnet.long %>%
-  filter(RAI == 1 | IAI == 1 | ROI == 1 | IOI == 1) %>%
-  filter(ptype == 1) %>%
-  group_by(AMIS_ID) %>%
-  summarise(deg.main.dos = sum(ongoing2),
-            deg.main.zero.month.offset = sum(ongoing3)) %>%
-  right_join(ARTnet.wide, by = "AMIS_ID")
+# Initalize data frames with appropriate row and column dimensions
+ongoing.eval.m <- matrix(nrow = length(ARTnet.long$SUB_DATE),
+                         ncol = end_month_offset - start_month_offset + 1)
+ongoing.eval.df <- data.frame(ongoing.eval.m)
 
-ARTnet.wide <- ARTnet.long %>%
-  filter(RAI == 1 | IAI == 1 | ROI == 1 | IOI == 1) %>%
-  filter(ptype == 2) %>%
-  group_by(AMIS_ID) %>%
-  summarise(deg.casl.dos = sum(ongoing2),
-            deg.casl.zero.month.offset = sum(ongoing3)) %>%
-  right_join(ARTnet.wide, by = "AMIS_ID")
+ongoing3.m <- matrix(nrow = length(ARTnet.long$SUB_DATE),
+                     ncol = end_month_offset - start_month_offset + 1)
+ongoing3.df <- data.frame(ongoing3.m)
 
-ARTnet.wide$deg.main.dos <- ifelse(is.na(ARTnet.wide$deg.main.dos),
-                                   0, ARTnet.wide$deg.main.dos)
-ARTnet.wide$deg.casl.dos <- ifelse(is.na(ARTnet.wide$deg.casl.dos),
-                                   0, ARTnet.wide$deg.casl.dos)
-ARTnet.wide$deg.main.zero.month.offset <- ifelse(is.na(
-  ARTnet.wide$deg.main.zero.month.offset),
-                                   0, ARTnet.wide$deg.main.zero.month.offset)
-ARTnet.wide$deg.casl.zero.month.offset <- ifelse(is.na(
-  ARTnet.wide$deg.casl.zero.month.offset),
-                                   0, ARTnet.wide$deg.casl.zero.month.offset)
+ARTnet.long.adjusted <- ARTnet.long
+ARTnet.wide.adjusted <- ARTnet.wide
+
+mean.degree.main <- c()
+mean.degree.casual <- c()
+
+for (i in start_month_offset:end_month_offset) {
+
+  ongoing.eval <- paste("ongoing.evaluation.date.m",i,sep="")
+  names(ongoing.eval.df)[i - start_month_offset + 1] <- ongoing.eval
+  assign(ongoing.eval, ARTnet.long$SUB_DATE - round(i*30.44))
+  ongoing.eval.df[,i - start_month_offset + 1] <- get(ongoing.eval)
+
+  ongoing3 <- paste("ongoing3.m",i,sep="")
+  names(ongoing3.df)[i - start_month_offset + 1] <- ongoing3
+  assign(ongoing3, ifelse(is.na(ifelse(ARTnet.long.adjusted$start.date <=
+                                         get(ongoing.eval) &
+                                         ARTnet.long.adjusted$end.date >= get(ongoing.eval),
+                                       1, 0)), 0, ifelse(ARTnet.long.adjusted$start.date <=
+                                                           get(ongoing.eval) &
+                                                           ARTnet.long.adjusted$end.date >= get(ongoing.eval),
+                                                         1, 0)))
+  ongoing3.df[,i - start_month_offset + 1] <- get(ongoing3)
+
+  ARTnet.long.adjusted <- cbind(ARTnet.long.adjusted,
+                                ongoing.eval.df[i - start_month_offset + 1],
+                                ongoing3.df[i - start_month_offset + 1])
+
+  ARTnet.wide.adjusted <- ARTnet.long.adjusted %>%
+    filter(RAI == 1 | IAI == 1 | ROI == 1 | IOI == 1) %>%
+    filter(ptype == 1) %>%
+    group_by(AMIS_ID) %>%
+    summarise(deg.main.n.month = sum(get(paste("ongoing3.m",i,sep="")))) %>%
+    right_join(ARTnet.wide.adjusted, by = "AMIS_ID")
+
+  # #Additional filtering
+  # ARTnet.wide.adjusted <- ARTnet.wide.adjusted %>%
+  #   filter(age >= 16 & age <= 29) %>%
+  #   filter(city2 == "Chicago")
+
+  ARTnet.wide.adjusted$deg.main.n.month <- ifelse(is.na(
+    ARTnet.wide.adjusted$deg.main.n.month), 0,
+    ARTnet.wide.adjusted$deg.main.n.month)
+  mean.degree.main[i - start_month_offset + 1] <- mean(
+    ARTnet.wide.adjusted$deg.main.n.month)
+  deg.main.n.month.name <- paste("deg.main.n.month.m",i,sep="")
+  names(ARTnet.wide.adjusted)[names(ARTnet.wide.adjusted) ==
+                                "deg.main.n.month"] <- deg.main.n.month.name
+
+  ARTnet.wide.adjusted <- ARTnet.long.adjusted %>%
+    filter(RAI == 1 | IAI == 1 | ROI == 1 | IOI == 1) %>%
+    filter(ptype == 2) %>%
+    group_by(AMIS_ID) %>%
+    summarise(deg.casl.n.month = sum(get(paste("ongoing3.m",i,sep="")))) %>%
+    right_join(ARTnet.wide.adjusted, by = "AMIS_ID")
+
+  ARTnet.wide.adjusted$deg.casl.n.month <- ifelse(is.na(
+    ARTnet.wide.adjusted$deg.casl.n.month), 0,
+    ARTnet.wide.adjusted$deg.casl.n.month)
+  mean.degree.casual[i - start_month_offset + 1] <- mean(
+    ARTnet.wide.adjusted$deg.casl.n.month)
+  deg.casl.n.month.name <- paste("deg.casl.n.month.m",i,sep="")
+  names(ARTnet.wide.adjusted)[names(ARTnet.wide.adjusted) ==
+                                "deg.casl.n.month"] <- deg.casl.n.month.name
+
+}
+
+# Create dependent variable: slope (degree for main 0-12 month; degree for casial 0-12 month)
+
+ARTnet.wide.adjusted <- ARTnet.wide.adjusted %>%
+                            mutate(main.slope = deg.main.n.month.m12 - deg.main.n.month.m0,
+                                   casl.slope = deg.casl.n.month.m12 - deg.casl.n.month.m0)
+
+# Unadjusted models
+
+main.fit.race <- lm(main.slope ~ race.cat, data = ARTnet.wide.adjusted)
+main.fit.age <- lm(main.slope ~ age.cat, data = ARTnet.wide.adjusted)
+main.fit.income <- lm(main.slope ~ as.factor(HHINCOME_2), data = ARTnet.wide.adjusted)
+main.fit.edu <- lm(main.slope ~ as.factor(HLEDUCAT_2), data = ARTnet.wide.adjusted)
+main.fit.reg <- lm(main.slope ~ REGCODE, data = ARTnet.wide.adjusted)
+
+casl.fit.race <- lm(casl.slope ~ race.cat, data = ARTnet.wide.adjusted)
+casl.fit.age <- lm(casl.slope ~ age.cat, data = ARTnet.wide.adjusted)
+casl.fit.income <- lm(casl.slope ~ as.factor(HHINCOME_2), data = ARTnet.wide.adjusted)
+casl.fit.edu <- lm(casl.slope ~ as.factor(HLEDUCAT_2), data = ARTnet.wide.adjusted)
+casl.fit.reg <- lm(casl.slope ~ REGCODE, data = ARTnet.wide.adjusted)
+
+# Summaries
+summary(main.fit.race)
+  round(confint(main.fit.race), 3)
+summary(main.fit.age)
+  round(confint(main.fit.age), 3)
+summary(main.fit.reg)
+  round(confint(main.fit.reg), 3)
+summary(main.fit.edu)
+  round(confint(main.fit.edu), 3)
+summary(main.fit.income)
+  round(confint(main.fit.income), 3)
+
+summary(casl.fit.race)
+  round(confint(casl.fit.race), 3)
+summary(casl.fit.age)
+  round(confint(casl.fit.age), 3)
+summary(casl.fit.reg)
+  round(confint(casl.fit.reg), 3)
+summary(casl.fit.edu)
+  round(confint(casl.fit.edu), 3)
+summary(casl.fit.income)
+  round(confint(casl.fit.income), 3)
+
+# Regression Diagnostics???
+
+boxplot(ARTnet.wide.adjusted$main.slope~ARTnet.wide.adjusted$race.cat)
+boxplot(ARTnet.wide.adjusted$main.slope~ARTnet.wide.adjusted$age.cat)
+boxplot(ARTnet.wide.adjusted$main.slope~ARTnet.wide.adjusted$REGCODE)
+boxplot(ARTnet.wide.adjusted$main.slope~ARTnet.wide.adjusted$HLEDUCAT_2)
+boxplot(ARTnet.wide.adjusted$main.slope~ARTnet.wide.adjusted$HHINCOME_2)
+
+layout(matrix(c(1,2,3,4),2,2))
+plot(main.fit.age)
 
 
-## ----dos_zmo_comparison1, echo = FALSE----------------------------------------------------------------------------------------------------------
-
-ARTnet.wide %>%
-  select(AMIS_ID, deg.casl.dos, deg.casl.zero.month.offset, deg.main.dos, deg.main.zero.month.offset)%>%
-  filter(deg.casl.dos > deg.casl.zero.month.offset | deg.main.dos >
-           deg.main.zero.month.offset)
-
-
-
-## ----dos_zmo_comparison2, echo=FALSE------------------------------------------------------------------------------------------------------------
-
-ARTnet.wide %>%
-  select(AMIS_ID, deg.casl.dos, deg.casl.zero.month.offset, deg.main.dos, deg.main.zero.month.offset)%>%
-  filter(deg.casl.dos < deg.casl.zero.month.offset | deg.main.dos <
-           deg.main.zero.month.offset)
-
-
-
-## ----dos_zmo_comparison3, echo=FALSE------------------------------------------------------------------------------------------------------------
-
-ARTnet.wide %>%
-  select(AMIS_ID, deg.casl.dos, deg.casl.zero.month.offset, deg.main.dos, deg.main.zero.month.offset)%>%
-  filter(0 < deg.casl.zero.month.offset - deg.casl.dos | 0 < deg.main.zero.month.offset - deg.main.dos) %>%
-  inner_join(ARTnet.long, ARTnet.wide, by = "AMIS_ID")%>%
-  select(AMIS_ID, ptype, start.date, end.date, SUB_DATE, ongoing2, ongoing3)%>%
-  filter(ongoing2 != ongoing3 & ptype %in% c(1,2) & SUB_DATE == end.date)
-
-
-
-## ----dos_zmo_comparison4, echo=FALSE------------------------------------------------------------------------------------------------------------
-
-ARTnet.wide %>%
-  select(AMIS_ID, deg.casl.dos, deg.casl.zero.month.offset, deg.main.dos, deg.main.zero.month.offset)%>%
-  filter(AMIS_ID %in% c(27110546, 2231741, 2589295, 2251818, 214311))
-
-# Explore some of these cases
-ARTnet.long %>%
-  select(AMIS_ID, ptype, start.date, end.date, SUB_DATE, ongoing2, ongoing3) %>%
-  filter(AMIS_ID %in% c(27110546, 2231741, 2589295, 2251818, 214311) &
-           ptype %in% c(1,2))
-
-mean.deg.main.dos <- mean(ARTnet.wide$deg.main.dos)
-mean.deg.casl.dos <- mean(ARTnet.wide$deg.casl.dos)
-
-
-## ----lineplot, echo=FALSE-----------------------------------------------------------------------------------------------------------------------
-
-df <- ARTnet.long %>%
-  filter(RAI == 1 | IAI == 1 | ROI == 1 | IOI == 1) %>%
-  filter(ptype %in% c(1,2))
-
-df$dos.ref <- as.numeric(df$SUB_DATE - df$SUB_DATE) #X-axis 0 point
-df$start.date.dos.ref <- as.numeric(df$SUB_DATE - df$start.date)
-df$end.date.dos.ref <- as.numeric(df$SUB_DATE - df$end.date)
-df$ptype_char <- ifelse(df$ptype == 1, "Main", "Casual")
-df$ptype_char <- as.factor(df$ptype_char)
-
-df <- df %>% arrange(desc(ptype), end.date.dos.ref)
-
-df$UID <- seq(1,nrow(df),1)
-df$UID_INV <- (nrow(df) + 1) - df$UID #Y-axis value
-
-plot <- ggplot(data=df, aes(dos.ref,UID_INV)) + coord_cartesian(xlim =
-                                                                  c(0,365)) +
-  ylab("Partnerships") + xlab("Days Offset from Day of Survey")
-
-plot + geom_segment(aes(x = end.date.dos.ref, y = UID_INV, xend =
-                          start.date.dos.ref, yend =
-                          UID_INV, color = ptype_char), data = df)
 
 

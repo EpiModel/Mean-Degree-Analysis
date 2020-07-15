@@ -195,8 +195,6 @@ rm(list = ls())
   library(ARTnetData, warn.conflicts=F, quietly=T)
   library(tidyverse, warn.conflicts=F, quietly=T)
 
-  #Create Dummy Variable 'All' to Filter for all records
-  ARTnet.wide$all <- rep(1,nrow(ARTnet.wide))
 
   #Create Variable 'Age.Cat' to Create Age Categories for Ages
   ARTnet.wide$age.cat <-
@@ -220,6 +218,9 @@ rm(list = ls())
 
 n_month_offset2 <- function(start_month, end_month, filter_var='all',
                            output_type='df') {
+
+  #Create Dummy Variable 'All' to Filter for all records
+  ARTnet.wide$all <- rep(1,nrow(ARTnet.wide))
 
   # pre-set start_month and end_month; filter_var and output_type
   #start_month <- 0
@@ -282,9 +283,7 @@ n_month_offset2 <- function(start_month, end_month, filter_var='all',
     ARTnet.long.adjusted2 <- ARTnet.long
     ARTnet.wide.adjusted2 <- ARTnet.wide
 
-    #not sure where the J comes in yet
-
-    for (i in start_month_offset:end_month_offset) {
+        for (i in start_month_offset:end_month_offset) {
 #sensitivity analysis code would go somewhere here?
 
       ongoing.eval <- paste("ongoing.evaluation.date.m",i,sep="")
