@@ -197,12 +197,12 @@ n_month_offset <- function(start_month, end_month, filter_var='all',
       # end dates are also imputed to 15th day of each month unless partnership is ongoing and end date is set to day of survey
       ongoing4 <- paste("ongoing4.m",i,sep="")
       names(ongoing4.df)[i - start_month_offset + 1] <- ongoing4
-      assign(ongoing4, ifelse(is.na(ifelse(ARTnet.long.adjusted2$start.date <=
+      assign(ongoing4, ifelse(is.na(ifelse(ARTnet.long.adjusted2$start.date.2 <=
                                              get(ongoing.eval) &
-                                             ARTnet.long.adjusted2$end.date >= get(ongoing.eval),
-                                           1, 0)), 0, ifelse(ARTnet.long.adjusted2$start.date <=
+                                             ARTnet.long.adjusted2$end.date.2 >= get(ongoing.eval),
+                                           1, 0)), 0, ifelse(ARTnet.long.adjusted2$start.date.2 <=
                                                                get(ongoing.eval) &
-                                                               ARTnet.long.adjusted2$end.date >= get(ongoing.eval),
+                                                               ARTnet.long.adjusted2$end.date.2 >= get(ongoing.eval),
                                                              1, 0)))
       ongoing4.df[,i - start_month_offset + 1] <- get(ongoing4)
 
@@ -674,12 +674,12 @@ for (i in start_month_offset:end_month_offset) {
 
   ongoing3 <- paste("ongoing3.m",i,sep="")
   names(ongoing3.df)[i - start_month_offset + 1] <- ongoing3
-  assign(ongoing3, ifelse(is.na(ifelse(ARTnet.long.adjusted$start.date <=
+  assign(ongoing3, ifelse(is.na(ifelse(ARTnet.long.adjusted$start.date.2 <=
                                          get(ongoing.eval) &
-                                         ARTnet.long.adjusted$end.date >= get(ongoing.eval),
-                                       1, 0)), 0, ifelse(ARTnet.long.adjusted$start.date <=
+                                         ARTnet.long.adjusted$end.date.2 >= get(ongoing.eval),
+                                       1, 0)), 0, ifelse(ARTnet.long.adjusted$start.date.2 <=
                                                            get(ongoing.eval) &
-                                                           ARTnet.long.adjusted$end.date >= get(ongoing.eval),
+                                                           ARTnet.long.adjusted$end.date.2 >= get(ongoing.eval),
                                                          1, 0)))
   ongoing3.df[,i - start_month_offset + 1] <- get(ongoing3)
 
