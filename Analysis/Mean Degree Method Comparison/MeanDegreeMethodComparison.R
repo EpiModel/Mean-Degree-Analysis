@@ -769,7 +769,7 @@ summary(casl.fit.edu)
 summary(casl.fit.income)
   round(confint(casl.fit.income), 3)
 
-# Regression Diagnostics???
+## Regression Diagnostics???
 
 boxplot(ARTnet.wide.adjusted$main.slope~ARTnet.wide.adjusted$race.cat)
 boxplot(ARTnet.wide.adjusted$main.slope~ARTnet.wide.adjusted$age.cat)
@@ -779,6 +779,200 @@ boxplot(ARTnet.wide.adjusted$main.slope~ARTnet.wide.adjusted$HHINCOME_2)
 
 layout(matrix(c(1,2,3,4),2,2))
 plot(main.fit.age)
+
+par(mfrow=c(1,1))
+
+# Exploring differences in stability of N-month offset by group -------------------------------------------------------
+
+summary(ARTnet.wide.adjusted$main.slope)
+summary(ARTnet.wide.adjusted$casl.slope)
+
+# Add mean duration of relationships to ARTnet.wide.adjusted
+ARTnet.wide.adjusted <- ARTnet.long.adjusted %>%
+  filter(RAI == 1 | IAI == 1 | ROI == 1 | IOI == 1) %>%
+  filter(ptype == 1) %>%
+  group_by(AMIS_ID) %>%
+  summarise(main.avgduration = mean(duration)) %>%
+  right_join(ARTnet.wide.adjusted, by = "AMIS_ID")
+
+ARTnet.wide.adjusted <- ARTnet.long.adjusted %>%
+  filter(RAI == 1 | IAI == 1 | ROI == 1 | IOI == 1) %>%
+  filter(ptype == 2) %>%
+  group_by(AMIS_ID) %>%
+  summarise(casl.avgduration = mean(duration)) %>%
+  right_join(ARTnet.wide.adjusted, by = "AMIS_ID")
+
+plot(ARTnet.wide.adjusted$main.avgduration, ARTnet.wide.adjusted$main.slope)
+plot(ARTnet.wide.adjusted$casl.avgduration, ARTnet.wide.adjusted$casl.slope)
+
+race.duration <- ARTnet.wide.adjusted %>%
+                    group_by(race.cat) %>%
+                    summarise(main.duration = mean(main.avgduration, na.rm = T))
+
+ARTnet.long.adjusted %>%
+  filter(ptype == 1) %>%
+  group_by(race.cat) %>%
+  summarise(main.duration = mean(duration, na.rm = T))
+
+ARTnet.long.adjusted %>%
+  filter(ptype == 2) %>%
+  group_by(race.cat) %>%
+  summarise(casl.duration = mean(duration, na.rm = T))
+
+ARTnet.wide.adjusted %>%
+  group_by(race.cat) %>%
+  summarise(main.slope = mean(main.slope, na.rm = T),
+            casl.slope = mean(casl.slope, na.rm = T))
+
+########
+
+# Create Variable 'Age.Cat' to Create Age Categories for Ages
+ARTnet.long.adjusted$age.cat <- ifelse(ARTnet.long.adjusted$age >= 15 & ARTnet.long.adjusted$age <= 24, '15-24',
+                                ifelse(ARTnet.long.adjusted$age >= 25 & ARTnet.long.adjusted$age <= 34, '25-34',
+                                ifelse(ARTnet.long.adjusted$age >= 35 & ARTnet.long.adjusted$age <= 44, '35-44',
+                                ifelse(ARTnet.long.adjusted$age >= 45 & ARTnet.long.adjusted$age <= 54, '45-54',
+                                ifelse(ARTnet.long.adjusted$age >= 55 & ARTnet.long.adjusted$age <= 65, '55-65',
+                                ifelse(ARTnet.long.adjusted$age >= 66, '66+', 'unknown'))))))
+
+ARTnet.long.adjusted %>%
+  filter(ptype == 1) %>%
+  group_by(age.cat) %>%
+  summarise(main.duration = mean(duration, na.rm = T))
+
+ARTnet.long.adjusted %>%
+  filter(ptype == 2) %>%
+  group_by(age.cat) %>%
+  summarise(casl.duration = mean(duration, na.rm = T))
+
+ARTnet.wide.adjusted %>%
+  group_by(age.cat) %>%
+  summarise(main.slope = mean(main.slope, na.rm = T),
+            casl.slope = mean(casl.slope, na.rm = T))
+
+#####
+
+ARTnet.wide.adjusted %>%
+  group_by(HLEDUCAT_2) %>%
+  summarise(main.duration = mean(main.avgduration, na.rm = T),
+            casl.duration = mean(casl.avgduration, na.rm = T),
+            main.slope = mean(main.slope, na.rm = T),
+            casl.slope = mean(casl.slope, na.rm = T))
+
+ARTnet.wide.adjusted %>%
+  group_by(HHINCOME_2) %>%
+  summarise(main.duration = mean(main.avgduration, na.rm = T),
+            casl.duration = mean(casl.avgduration, na.rm = T),
+            main.slope = mean(main.slope, na.rm = T),
+            casl.slope = mean(casl.slope, na.rm = T))
+
+
+#####
+
+ARTnet.wide.adjusted <-
+  ARTnet.long.adjusted %>%
+  filter(ptype == 1) %>%
+  group_by(AMIS_ID) %>%
+  summarise(n.main = n()) %>%
+  right_join(ARTnet.wide.adjusted, by = "AMIS_ID")
+
+ARTnet.wide.adjusted <-
+  ARTnet.long.adjusted %>%
+  filter(ptype == 2) %>%
+  group_by(AMIS_ID) %>%
+  summarise(n.casl = n()) %>%
+  right_join(ARTnet.wide.adjusted, by = "AMIS_ID")
+
+ARTnet.wide.adjusted <-
+  ARTnet.long.adjusted %>%
+  filter(ptype == 3) %>%
+  group_by(AMIS_ID) %>%
+  summarise(n.one = n()) %>%
+  right_join(ARTnet.wide.adjusted, by = "AMIS_ID")
+
+#replace NA's with 0
+ARTnet.wide.adjusted$n.main[is.na(ARTnet.wide.adjusted$n.main)] <- 0
+ARTnet.wide.adjusted$n.casl[is.na(ARTnet.wide.adjusted$n.casl)] <- 0
+ARTnet.wide.adjusted$n.one[is.na(ARTnet.wide.adjusted$n.one)] <- 0
+
+#create total partners variable
+ARTnet.wide.adjusted$n.all <- ARTnet.wide.adjusted$n.main + ARTnet.wide.adjusted$n.casl + ARTnet.wide.adjusted$n.one
+
+#check data
+table(ARTnet.wide.adjusted$n.main, useNA = "always")
+table(ARTnet.wide.adjusted$n.casl, useNA = "always")
+table(ARTnet.wide.adjusted$n.one, useNA = "always")
+table(ARTnet.wide.adjusted$n.all, useNA = "always")
+
+table(ARTnet.wide.adjusted$main.slope, ARTnet.wide.adjusted$n.main)
+table(ARTnet.wide.adjusted$main.slope, ARTnet.wide.adjusted$n.casl)
+table(ARTnet.wide.adjusted$main.slope, ARTnet.wide.adjusted$n.one)
+table(ARTnet.wide.adjusted$main.slope, ARTnet.wide.adjusted$n.all)
+
+table(ARTnet.wide.adjusted$casl.slope, ARTnet.wide.adjusted$n.main)
+table(ARTnet.wide.adjusted$casl.slope, ARTnet.wide.adjusted$n.casl)
+table(ARTnet.wide.adjusted$casl.slope, ARTnet.wide.adjusted$n.one)
+
+plot(ARTnet.wide.adjusted$n.all, ARTnet.wide.adjusted$main.slope)
+plot(ARTnet.wide.adjusted$n.all, ARTnet.wide.adjusted$casl.slope)
+
+# Identify outliers
+
+#main slope outliers
+ARTnet.wide.adjusted %>%
+  filter(!(main.slope %in% c(-1:1))) %>%
+  select(AMIS_ID, main.slope)
+
+main.outliers <- ARTnet.long %>%
+  filter(AMIS_ID %in% c(2515935,3017617,27010355,2976652,32510928)) %>%
+  select(AMIS_ID, ptype, SUB_DATE, start.date.2, end.date.2) %>%
+  mutate(months.sub.start = (year(SUB_DATE) - year(start.date.2)) * 12 + month(SUB_DATE) - month(start.date.2),
+         months.sub.end = (year(SUB_DATE) - year(end.date.2)) * 12 + month(SUB_DATE) - month(end.date.2))
+
+#casual slope outliers
+ARTnet.wide.adjusted %>%
+  filter(!(casl.slope %in% c(-3:3))) %>%
+  select(AMIS_ID, casl.slope) %>%
+  print(n=22)
+
+casl.outliers <- ARTnet.long %>%
+  filter(AMIS_ID %in% c(2568904,26610093,2853178,263264,2997173)) %>%
+  select(AMIS_ID, ptype, SUB_DATE, start.date.2, end.date.2) %>%
+  mutate(months.sub.start = (year(SUB_DATE) - year(start.date.2)) * 12 + month(SUB_DATE) - month(start.date.2),
+         months.sub.end = (year(SUB_DATE) - year(end.date.2)) * 12 + month(SUB_DATE) - month(end.date.2))
+
+
+#####
+
+# scale up average main and causal duration to months and years
+ARTnet.wide.adjusted <- ARTnet.wide.adjusted %>%
+                            mutate(main.avgduration.mo = main.avgduration/4,
+                                   casl.avgduration.mo = casl.avgduration/4,
+                                   main.avgduration.yr = main.avgduration/52,
+                                   casl.avgduration.yr = casl.avgduration/52)
+
+
+# Multiple regression model
+
+main.multiple <- lm(main.slope ~ race.cat + age + main.avgduration.mo + n.all, data = ARTnet.wide.adjusted)
+summary(main.multiple)
+round(confint(main.multiple), 3)
+
+main.multiple.yr <- lm(main.slope ~ race.cat + age + main.avgduration.yr + n.all, data = ARTnet.wide.adjusted)
+summary(main.multiple.yr)
+round(confint(main.multiple.yr), 3)
+
+casl.multiple <- lm(casl.slope ~ race.cat + age + casl.avgduration.mo + n.all, data = ARTnet.wide.adjusted)
+summary(casl.multiple)
+round(confint(casl.multiple), 3)
+
+casl.multiple.yr <- lm(casl.slope ~ race.cat + age + casl.avgduration.yr + n.all, data = ARTnet.wide.adjusted)
+summary(casl.multiple.yr)
+round(confint(casl.multiple.yr), 3)
+
+summary(ARTnet.wide.adjusted$age)
+
+
+
 
 
 
