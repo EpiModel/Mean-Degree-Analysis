@@ -1,4 +1,5 @@
-# STI Screening during PrEP Care among Men who Have Sex with Men in the United States
+# Comparing Sexual Network Degree among Men who have Sex with Men by Measurement Timeframe
+
 
 This repository contains the analysis scripts and tables for the following study:
 
