@@ -1,6 +1,8 @@
-## Mean Degree of Ongoing Partnerships-Day-of-Survey versus Three-Month Offset Method
+# ------------------------------------------------------------------------------------------#
+# Mean Degree of Ongoing Partnerships-Day-of-Survey versus Three-Month Offset Method
 # Purpose: To compare two methods of determining the mean degree of ongoing casual and main
 # partnerships using response data from the ARTnet study.
+#-------------------------------------------------------------------------------------------#
 
 ## Load Data and Packages---------------------------------------------------------------------
 library(ARTnetData, warn.conflicts=F, quietly=T)
@@ -13,18 +15,6 @@ library(gridExtra)
 library(cowplot)
 library(ggplot2)
 
-# rm(list = ls())
-
-## Calculate mean degree using "day-of-survey" method-----------------------------------------
-## day_of_survey_md_calc
-
-# We calculate mean degree using the ARTnet long and wide datasets.
-# The granularity of the ART-net long dataset is the individual partnerships whereas
-# the granularity of the ART-net wide dataset is the surveyed individual.
-# First, the number of ongoing partnerships per individual is assessed using the
-# long dataset. Then, mean degree is calculated by summing ongoing partnerships
-# by surveyed individual and dividing by total surveyed individuals using the
-# wide dataset.
 
 # Load long data
 ARTnet.long$ONGOING <- as.numeric(ARTnet.long$ONGOING)
@@ -49,7 +39,9 @@ for (i in 1:nrow(ARTnet.long)) {
 summary(day(ARTnet.long$start.date.2))
 summary(day(ARTnet.long$end.date.2))
 
-## Table 1 -----------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------#
+# TABLE 1 
+#-----------------------------------------------------------------------------#
 
 ## Individual-level characteristics
 
@@ -103,7 +95,17 @@ addmargins(table(ARTnet.long$ongoing, useNA = 'always'))
 mean(ARTnet.long$duration, na.rm = T)
 sd(ARTnet.long$duration, na.rm = T)
 
-## generalized_month_offset_function---------------------------------------------------------
+# ----------------------------------------------------------------------------#
+# Generalized Function for Day-of-Survey and Months-Offset Method
+#-----------------------------------------------------------------------------#
+
+# We calculate mean degree using the ARTnet long and wide datasets.
+# The granularity of the ART-net long dataset is the individual partnerships whereas
+# the granularity of the ART-net wide dataset is the surveyed individual.
+# First, the number of ongoing partnerships per individual is assessed using the
+# long dataset. Then, mean degree is calculated by summing ongoing partnerships
+# by surveyed individual and dividing by total surveyed individuals using the
+# wide dataset.
 
 # Below is a helper function to determine mean degree by month by some categorical
 # variable.
@@ -411,7 +413,9 @@ n_month_offset <- function(start_month, end_month, filter_var='all',
 
   }
 
-# Examples
+# ----------------------------------------------------------------------------#
+# Supplemental Table 1
+#-----------------------------------------------------------------------------#
 
 all <- n_month_offset(0,12)
 race.cat <- n_month_offset(0,12,'race.cat')
@@ -423,19 +427,21 @@ income <- income %>% filter(!is.na(var_val) &
 education <- n_month_offset(0,12,'HLEDUCAT_2')
 education <- education %>% filter(!is.na(var_val))
 
-## plots function----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------#
+# Plot function for creating figures
+#-----------------------------------------------------------------------------#
 
-# The plot_md_comparisons then uses the data frames generated from the n_month_offset function to plot comparisons of mean degree by day of survey and n-month offset for specified month offset ranges.
-
-# Results from the function are below.
+# The plot_md_comparisons function then uses the data frames generated from the 
+# n_month_offset function to plot comparisons of mean degree by day of survey and 
+# n-month offset for specified month offset ranges.
 
 plot_md_comparisons <- function(md_df, cat, labels) {
 
     if (length(unique(md_df$var_val)) == 1) {
 
-      total_plot_title <- paste("Mean Degree Comparison - Total Partnerships")
-      main_plot_title <- paste("Mean Degree Comparison - Main Partnerships")
-      casl_plot_title <- paste("Mean Degree Comparison - Casual Partnerships")
+      total_plot_title <- paste("Total Partnerships")
+      main_plot_title <- paste("Main Partnerships")
+      casl_plot_title <- paste("Casual Partnerships")
 
        total_plot <- ggplot(md_df,
                             aes(x=factor(month_num), y=md_total)) +
@@ -447,16 +453,17 @@ plot_md_comparisons <- function(md_df, cat, labels) {
                        position=position_dodge(0.05)) +
                      labs(fill= "Category", title=total_plot_title,
                           x = "Month Offset", y = "Mean Degree") +
-                     ylim(c(0.5, 1.6))
+                     ylim(c(0.9, 1.3)) +
+                     theme_minimal(base_size = 10) 
 
        total_plot <- total_plot +
                        geom_hline(aes(yintercept = unique(md_total_dos)),
                                   linetype = "dotted",
-                                  data = md_df)
+                                  data = md_df) 
        total_plot <- total_plot +
                        geom_hline(aes(yintercept = unique(md_total_dos_ll)),
                                   linetype = "dashed",
-                                  data = md_df)
+                                  data = md_df) 
        total_plot <- total_plot +
                        geom_hline(aes(yintercept = unique(md_total_dos_ul)),
                                   linetype = "dashed",
@@ -478,7 +485,8 @@ plot_md_comparisons <- function(md_df, cat, labels) {
                     labs(title=main_plot_title,
                           x = "Month Offset", y = "Mean Degree") +
                     theme(legend.position = "none") +
-                    ylim(c(0.2, 0.6))
+                    ylim(c(0.35, 0.5)) +
+                    theme_minimal(base_size = 10)
 
        main_plot <- main_plot +
                        geom_hline(aes(yintercept = unique(md_main_dos)),
@@ -508,7 +516,8 @@ plot_md_comparisons <- function(md_df, cat, labels) {
                      labs(title=casl_plot_title,
                           x = "Month Offset", y = "Mean Degree") +
                      theme(legend.position = "none") +
-                     ylim(c(0.3, 1.25))
+                     ylim(c(0.6, 0.85)) +
+                     theme_minimal(base_size = 10)
 
        casl_plot <- casl_plot +
                        geom_hline(aes(yintercept = unique(md_casl_dos)),
@@ -531,15 +540,9 @@ plot_md_comparisons <- function(md_df, cat, labels) {
 
       } else {
 
-            total_plot_title <- paste("Mean Degree Comparison by ",
-                                      cat," - ",
-                                    "Total Partnerships")
-            main_plot_title <- paste("Mean Degree Comparison by ",
-                                     cat," - ",
-                                    "Main Partnerships")
-            casl_plot_title <- paste("Mean Degree Comparison by ",
-                                     cat," - ",
-                                    "Casual Partnerships")
+            total_plot_title <- paste("Total Partnerships")
+            main_plot_title <- paste("Main Partnerships")
+            casl_plot_title <- paste("Casual Partnerships")
 
              total_plot <- ggplot(md_df,
                             aes(x=factor(month_num), y=md_total,
@@ -555,12 +558,13 @@ plot_md_comparisons <- function(md_df, cat, labels) {
                           x = "Month Offset", y = "Mean Degree") +
                      scale_color_discrete(name=cat,
                                           labels=labels) +
-                     ylim(c(0.5, 1.6))
+                     ylim(c(0.5, 1.6)) 
 
       total_plot <- total_plot +
   geom_hline(data = md_df,
              aes(yintercept = md_total_dos, col = var_val),
-             linetype = "dashed")
+             linetype = "dashed") +
+             theme_minimal(base_size = 10)
 
        main_plot <- ggplot(md_df,
                             aes(x=factor(month_num), y=md_main,
@@ -574,13 +578,14 @@ plot_md_comparisons <- function(md_df, cat, labels) {
                        position=position_dodge(0.05)) +
                      labs(title=main_plot_title,
                           x = "Month Offset", y = "Mean Degree") +
+                     theme_minimal(base_size = 10) +
                      theme(legend.position = "none") +
-                     ylim(c(0.2, 0.6))
+                     ylim(c(0.2, 0.6)) 
 
       main_plot <- main_plot +
   geom_hline(data = md_df,
              aes(yintercept = md_main_dos, col = var_val),
-             linetype = "dashed")
+             linetype = "dashed") 
 
        casl_plot <- ggplot(md_df,
                             aes(x=factor(month_num), y=md_casl,
@@ -594,13 +599,14 @@ plot_md_comparisons <- function(md_df, cat, labels) {
                        position=position_dodge(0.05)) +
                      labs(title=casl_plot_title,
                           x = "Month Offset", y = "Mean Degree") +
+                     theme_minimal(base_size = 10) +
                      theme(legend.position = "none") +
-                     ylim(c(0.3, 1.25))
+                     ylim(c(0.3, 1.25)) 
 
        casl_plot <- casl_plot +
   geom_hline(data = md_df,
              aes(yintercept = md_casl_dos, col = var_val),
-             linetype = "dashed")
+             linetype = "dashed") 
 
        #require(gridExtra)
        #require(cowplot)
@@ -613,32 +619,74 @@ plot_md_comparisons <- function(md_df, cat, labels) {
 
 }
 
+# ----------------------------------------------------------------------------#
+# FIGURE 1
+#-----------------------------------------------------------------------------#
+
+png('Figure1.png', width=2048, height=1536, res=300)
 plot_md_comparisons(all)
+dev.off()
+
+# ----------------------------------------------------------------------------#
+# FIGURE 2
+#-----------------------------------------------------------------------------#
+
+png('Figure2.png', width=2048, height=1536, res=300)
 plot_md_comparisons(race.cat, "Race/Ethnicity",
                     c("Black","Hispanic", "Other", "White"))
+dev.off()
+
+# ----------------------------------------------------------------------------#
+# SUPPLEMENTAL FIGURE 2
+#-----------------------------------------------------------------------------#
+
+png('SF2.png', width=2048, height=1536, res=300)
 plot_md_comparisons(age.cat, "Age Category",
                     c("15-24 years",
                       "25-34 years",
                       "35-44 years",
                       "45-54 years",
                       "55-65 years"))
+dev.off()
+
+# ----------------------------------------------------------------------------#
+# SUPPLEMENTAL FIGURE 3
+#-----------------------------------------------------------------------------#
+
+png('SF3.png', width=2048, height=1536, res=300)
 plot_md_comparisons(region, "Census Region",
                     c("Northeast",
                       "Midwest",
                       "South",
                       "West"))
-plot_md_comparisons(education, "Highest Level of Education",
+dev.off()
+
+# ----------------------------------------------------------------------------#
+# SUPPLEMENTAL FIGURE 4
+#-----------------------------------------------------------------------------#
+
+png('SF4.png', width=2900, height=1600, res=350)
+plot_md_comparisons(education, "Education Level",
                     c("High school or below",
                       "Some college",
                       "College and above"))
+dev.off()
+
+# ----------------------------------------------------------------------------#
+# SUPPLEMENTAL FIGURE 5
+#-----------------------------------------------------------------------------#
+
+png('SF5.png', width=3000, height=1600, res=300)
 plot_md_comparisons(income, "Annual Household Income",
                     c("$0 to $19,999",
                       "$20,000 to $39,999",
                       "$40,000 to $74,999",
                       "$75,000 or more"))
+dev.off()
 
-
-# Linear Regression ------------------------------------------------------------------------
+# ----------------------------------------------------------------------------#
+# Creating New Variables for Simple and Multiple Linear Regression
+#-----------------------------------------------------------------------------#
 
 # Create object ARTnet.wide.adjusted for analysis by using code found in N-month offset function
 
@@ -726,66 +774,28 @@ for (i in start_month_offset:end_month_offset) {
 
 }
 
-# Create dependent variable: slope (degree for main 0-12 month; degree for casial 0-12 month)
+# Create dependent variable: slope (difference in degree for main and casual relationships between 12 and 0 months)
 
 ARTnet.wide.adjusted <- ARTnet.wide.adjusted %>%
                             mutate(main.slope = deg.main.n.month.m12 - deg.main.n.month.m0,
-                                   casl.slope = deg.casl.n.month.m12 - deg.casl.n.month.m0)
-
-# Unadjusted models
-
-main.fit.race <- lm(main.slope ~ race.cat, data = ARTnet.wide.adjusted)
-main.fit.age <- lm(main.slope ~ age.cat, data = ARTnet.wide.adjusted)
-main.fit.income <- lm(main.slope ~ as.factor(HHINCOME_2), data = ARTnet.wide.adjusted)
-main.fit.edu <- lm(main.slope ~ as.factor(HLEDUCAT_2), data = ARTnet.wide.adjusted)
-main.fit.reg <- lm(main.slope ~ REGCODE, data = ARTnet.wide.adjusted)
-
-casl.fit.race <- lm(casl.slope ~ race.cat, data = ARTnet.wide.adjusted)
-casl.fit.age <- lm(casl.slope ~ age.cat, data = ARTnet.wide.adjusted)
-casl.fit.income <- lm(casl.slope ~ as.factor(HHINCOME_2), data = ARTnet.wide.adjusted)
-casl.fit.edu <- lm(casl.slope ~ as.factor(HLEDUCAT_2), data = ARTnet.wide.adjusted)
-casl.fit.reg <- lm(casl.slope ~ REGCODE, data = ARTnet.wide.adjusted)
-
-# Summaries
-summary(main.fit.race)
-  round(confint(main.fit.race), 3)
-summary(main.fit.age)
-  round(confint(main.fit.age), 3)
-summary(main.fit.reg)
-  round(confint(main.fit.reg), 3)
-summary(main.fit.edu)
-  round(confint(main.fit.edu), 3)
-summary(main.fit.income)
-  round(confint(main.fit.income), 3)
-
-summary(casl.fit.race)
-  round(confint(casl.fit.race), 3)
-summary(casl.fit.age)
-  round(confint(casl.fit.age), 3)
-summary(casl.fit.reg)
-  round(confint(casl.fit.reg), 3)
-summary(casl.fit.edu)
-  round(confint(casl.fit.edu), 3)
-summary(casl.fit.income)
-  round(confint(casl.fit.income), 3)
-
-## Regression Diagnostics???
-
-boxplot(ARTnet.wide.adjusted$main.slope~ARTnet.wide.adjusted$race.cat)
-boxplot(ARTnet.wide.adjusted$main.slope~ARTnet.wide.adjusted$age.cat)
-boxplot(ARTnet.wide.adjusted$main.slope~ARTnet.wide.adjusted$REGCODE)
-boxplot(ARTnet.wide.adjusted$main.slope~ARTnet.wide.adjusted$HLEDUCAT_2)
-boxplot(ARTnet.wide.adjusted$main.slope~ARTnet.wide.adjusted$HHINCOME_2)
-
-layout(matrix(c(1,2,3,4),2,2))
-plot(main.fit.age)
-
-par(mfrow=c(1,1))
-
-# Exploring differences in stability of N-month offset by group -------------------------------------------------------
-
-summary(ARTnet.wide.adjusted$main.slope)
-summary(ARTnet.wide.adjusted$casl.slope)
+                                   casl.slope = deg.casl.n.month.m12 - deg.casl.n.month.m0,
+                                   main.mean = (deg.main.n.month.m0 + deg.main.n.month.m1 + deg.main.n.month.m2 +
+                                     deg.main.n.month.m3 + deg.main.n.month.m4 + deg.main.n.month.m5 +
+                                     deg.main.n.month.m6 + deg.main.n.month.m7 + deg.main.n.month.m8 +
+                                     deg.main.n.month.m9 + deg.main.n.month.m10 + deg.main.n.month.m11 + deg.main.n.month.m12)/13,
+                                   casl.mean = (deg.casl.n.month.m0 + deg.casl.n.month.m1 + deg.casl.n.month.m2 +
+                                     deg.casl.n.month.m3 + deg.casl.n.month.m4 + deg.casl.n.month.m5 +
+                                     deg.casl.n.month.m6 + deg.casl.n.month.m7 + deg.casl.n.month.m8 +
+                                     deg.casl.n.month.m9 + deg.casl.n.month.m10 + deg.casl.n.month.m11 + deg.casl.n.month.m12)/13,
+                                   total.mean = (deg.main.n.month.m0 + deg.main.n.month.m1 + deg.main.n.month.m2 +
+                                                 deg.main.n.month.m3 + deg.main.n.month.m4 + deg.main.n.month.m5 +
+                                                 deg.main.n.month.m6 + deg.main.n.month.m7 + deg.main.n.month.m8 +
+                                                 deg.main.n.month.m9 + deg.main.n.month.m10 + deg.main.n.month.m11 + 
+                                                 deg.main.n.month.m12 + deg.casl.n.month.m0 + deg.casl.n.month.m1 + 
+                                                 deg.casl.n.month.m2 + deg.casl.n.month.m3 + deg.casl.n.month.m4 + 
+                                                 deg.casl.n.month.m5 + deg.casl.n.month.m6 + deg.casl.n.month.m7 + 
+                                                 deg.casl.n.month.m8 + deg.casl.n.month.m9 + deg.casl.n.month.m10 + 
+                                                 deg.casl.n.month.m11 + deg.casl.n.month.m12)/13)
 
 # Add mean duration of relationships to ARTnet.wide.adjusted
 ARTnet.wide.adjusted <- ARTnet.long.adjusted %>%
@@ -802,71 +812,21 @@ ARTnet.wide.adjusted <- ARTnet.long.adjusted %>%
   summarise(casl.avgduration = mean(duration)) %>%
   right_join(ARTnet.wide.adjusted, by = "AMIS_ID")
 
-plot(ARTnet.wide.adjusted$main.avgduration, ARTnet.wide.adjusted$main.slope)
-plot(ARTnet.wide.adjusted$casl.avgduration, ARTnet.wide.adjusted$casl.slope)
+# Scale up average main and causal duration to months and years
+ARTnet.wide.adjusted <- ARTnet.wide.adjusted %>%
+  mutate(main.avgduration.mo = main.avgduration/4,
+         casl.avgduration.mo = casl.avgduration/4,
+         main.avgduration.yr = main.avgduration/52,
+         casl.avgduration.yr = casl.avgduration/52)
 
-race.duration <- ARTnet.wide.adjusted %>%
-                    group_by(race.cat) %>%
-                    summarise(main.duration = mean(main.avgduration, na.rm = T))
+summary(ARTnet.wide.adjusted$main.avgduration)
+summary(ARTnet.wide.adjusted$casl.avgduration)
+summary(ARTnet.wide.adjusted$main.avgduration.mo)
+summary(ARTnet.wide.adjusted$casl.avgduration.mo)
+summary(ARTnet.wide.adjusted$main.avgduration.yr)
+summary(ARTnet.wide.adjusted$casl.avgduration.yr)
 
-ARTnet.long.adjusted %>%
-  filter(ptype == 1) %>%
-  group_by(race.cat) %>%
-  summarise(main.duration = mean(duration, na.rm = T))
-
-ARTnet.long.adjusted %>%
-  filter(ptype == 2) %>%
-  group_by(race.cat) %>%
-  summarise(casl.duration = mean(duration, na.rm = T))
-
-ARTnet.wide.adjusted %>%
-  group_by(race.cat) %>%
-  summarise(main.slope = mean(main.slope, na.rm = T),
-            casl.slope = mean(casl.slope, na.rm = T))
-
-########
-
-# Create Variable 'Age.Cat' to Create Age Categories for Ages
-ARTnet.long.adjusted$age.cat <- ifelse(ARTnet.long.adjusted$age >= 15 & ARTnet.long.adjusted$age <= 24, '15-24',
-                                ifelse(ARTnet.long.adjusted$age >= 25 & ARTnet.long.adjusted$age <= 34, '25-34',
-                                ifelse(ARTnet.long.adjusted$age >= 35 & ARTnet.long.adjusted$age <= 44, '35-44',
-                                ifelse(ARTnet.long.adjusted$age >= 45 & ARTnet.long.adjusted$age <= 54, '45-54',
-                                ifelse(ARTnet.long.adjusted$age >= 55 & ARTnet.long.adjusted$age <= 65, '55-65',
-                                ifelse(ARTnet.long.adjusted$age >= 66, '66+', 'unknown'))))))
-
-ARTnet.long.adjusted %>%
-  filter(ptype == 1) %>%
-  group_by(age.cat) %>%
-  summarise(main.duration = mean(duration, na.rm = T))
-
-ARTnet.long.adjusted %>%
-  filter(ptype == 2) %>%
-  group_by(age.cat) %>%
-  summarise(casl.duration = mean(duration, na.rm = T))
-
-ARTnet.wide.adjusted %>%
-  group_by(age.cat) %>%
-  summarise(main.slope = mean(main.slope, na.rm = T),
-            casl.slope = mean(casl.slope, na.rm = T))
-
-#####
-
-ARTnet.wide.adjusted %>%
-  group_by(HLEDUCAT_2) %>%
-  summarise(main.duration = mean(main.avgduration, na.rm = T),
-            casl.duration = mean(casl.avgduration, na.rm = T),
-            main.slope = mean(main.slope, na.rm = T),
-            casl.slope = mean(casl.slope, na.rm = T))
-
-ARTnet.wide.adjusted %>%
-  group_by(HHINCOME_2) %>%
-  summarise(main.duration = mean(main.avgduration, na.rm = T),
-            casl.duration = mean(casl.avgduration, na.rm = T),
-            main.slope = mean(main.slope, na.rm = T),
-            casl.slope = mean(casl.slope, na.rm = T))
-
-
-#####
+# Create variables for number of main, casual, and one-time partners reported
 
 ARTnet.wide.adjusted <-
   ARTnet.long.adjusted %>%
@@ -889,87 +849,232 @@ ARTnet.wide.adjusted <-
   summarise(n.one = n()) %>%
   right_join(ARTnet.wide.adjusted, by = "AMIS_ID")
 
-#replace NA's with 0
+# Replace NA's with 0
 ARTnet.wide.adjusted$n.main[is.na(ARTnet.wide.adjusted$n.main)] <- 0
 ARTnet.wide.adjusted$n.casl[is.na(ARTnet.wide.adjusted$n.casl)] <- 0
 ARTnet.wide.adjusted$n.one[is.na(ARTnet.wide.adjusted$n.one)] <- 0
 
-#create total partners variable
+# Create variable for total partners reported
 ARTnet.wide.adjusted$n.all <- ARTnet.wide.adjusted$n.main + ARTnet.wide.adjusted$n.casl + ARTnet.wide.adjusted$n.one
 
-#check data
+# Check data
 table(ARTnet.wide.adjusted$n.main, useNA = "always")
 table(ARTnet.wide.adjusted$n.casl, useNA = "always")
 table(ARTnet.wide.adjusted$n.one, useNA = "always")
 table(ARTnet.wide.adjusted$n.all, useNA = "always")
 
-table(ARTnet.wide.adjusted$main.slope, ARTnet.wide.adjusted$n.main)
-table(ARTnet.wide.adjusted$main.slope, ARTnet.wide.adjusted$n.casl)
-table(ARTnet.wide.adjusted$main.slope, ARTnet.wide.adjusted$n.one)
+# Add main.mean, casl.mean, and total.mean to ### Supplemental Table 1 ###
+
+mean(ARTnet.wide.adjusted$main.mean)
+mean(ARTnet.wide.adjusted$casl.mean)
+
+ARTnet.wide.adjusted %>%
+  group_by(race.cat) %>%
+  summarize(mean.main = mean(main.mean),
+          mean.casl = mean(casl.mean))
+
+ARTnet.wide.adjusted %>%
+  group_by(age.cat) %>%
+  summarize(mean.main = mean(main.mean),
+            mean.casl = mean(casl.mean))
+
+ARTnet.wide.adjusted %>%
+  group_by(REGCODE) %>%
+  summarize(mean.main = mean(main.mean),
+            mean.casl = mean(casl.mean))
+
+ARTnet.wide.adjusted %>%
+  group_by(HLEDUCAT_2) %>%
+  summarize(mean.main = mean(main.mean),
+            mean.casl = mean(casl.mean))
+
+ARTnet.wide.adjusted %>%
+  group_by(HHINCOME_2) %>%
+  summarize(mean.main = mean(main.mean),
+            mean.casl = mean(casl.mean))
+
+# ----------------------------------------------------------------------------#
+# TABLE 2
+#-----------------------------------------------------------------------------#
+
+# Function for linear regression models
+
+linear_reg <- function(outcome, exposure) {
+  linear <- lm(outcome ~ exposure, data = ARTnet.wide.adjusted)
+  s <- summary(linear)
+  r <- round(confint(linear), 2)
+  return(list(s,r))
+}
+
+linear_reg(ARTnet.wide.adjusted$main.slope, ARTnet.wide.adjusted$race.cat)
+linear_reg(ARTnet.wide.adjusted$main.slope, ARTnet.wide.adjusted$age.cat)
+linear_reg(ARTnet.wide.adjusted$main.slope, ARTnet.wide.adjusted$age)
+linear_reg(ARTnet.wide.adjusted$main.slope, factor(ARTnet.wide.adjusted$HHINCOME_2))
+linear_reg(ARTnet.wide.adjusted$main.slope, factor(ARTnet.wide.adjusted$HLEDUCAT_2))
+linear_reg(ARTnet.wide.adjusted$main.slope, ARTnet.wide.adjusted$REGCODE)
+linear_reg(ARTnet.wide.adjusted$main.slope, ARTnet.wide.adjusted$main.avgduration.yr)
+linear_reg(ARTnet.wide.adjusted$main.slope, ARTnet.wide.adjusted$n.all)
+
+linear_reg(ARTnet.wide.adjusted$casl.slope, ARTnet.wide.adjusted$race.cat)
+linear_reg(ARTnet.wide.adjusted$casl.slope, ARTnet.wide.adjusted$age.cat)
+linear_reg(ARTnet.wide.adjusted$casl.slope, ARTnet.wide.adjusted$age)
+linear_reg(ARTnet.wide.adjusted$casl.slope, factor(ARTnet.wide.adjusted$HHINCOME_2))
+linear_reg(ARTnet.wide.adjusted$casl.slope, factor(ARTnet.wide.adjusted$HLEDUCAT_2))
+linear_reg(ARTnet.wide.adjusted$casl.slope, ARTnet.wide.adjusted$REGCODE)
+linear_reg(ARTnet.wide.adjusted$casl.slope, ARTnet.wide.adjusted$main.avgduration.yr)
+linear_reg(ARTnet.wide.adjusted$casl.slope, ARTnet.wide.adjusted$n.all)
+
+# ----------------------------------------------------------------------------#
+# TABLE 3
+#-----------------------------------------------------------------------------#
+
+# Multiple regression model
+
+#using total number of partnerships reported
+main.multiple.yr <- lm(main.slope ~ race.cat + age + main.avgduration.yr + n.all, data = ARTnet.wide.adjusted)
+summary(main.multiple.yr)
+round(confint(main.multiple.yr), 3)
+
+#using total number of male partners
+main.multiple.yr2 <- lm(main.slope ~ race.cat + age + main.avgduration.yr + M_MP12OANUM2, data = ARTnet.wide.adjusted)
+summary(main.multiple.yr2)
+round(confint(main.multiple.yr2), 3)
+
+#using total number of partnerships reported
+main.multiple.yr3 <- lm(main.slope ~ race.cat + age + main.avgduration.yr + n.all + factor(HHINCOME_2) + factor(HLEDUCAT_2) + factor(REGCODE), data = ARTnet.wide.adjusted)
+summary(main.multiple.yr3)
+round(confint(main.multiple.yr3), 3)
+
+ARTnet.wide.adjusted$REGCODE
+
+#using total number of partnerships reported
+casl.multiple.yr <- lm(casl.slope ~ race.cat + age + casl.avgduration.yr + n.all, data = ARTnet.wide.adjusted)
+summary(casl.multiple.yr)
+round(confint(casl.multiple.yr), 3)
+
+#using total number of male partners
+casl.multiple.yr2 <- lm(casl.slope ~ race.cat + age + casl.avgduration.yr + M_MP12OANUM2, data = ARTnet.wide.adjusted)
+summary(casl.multiple.yr2)
+round(confint(casl.multiple.yr2), 3)
+
+# ----------------------------------------------------------------------------#
+# Exploring differences in stability of N-month offset by 
+# number of partnerships reported and partnership duration
+#-----------------------------------------------------------------------------#
+
+summary(ARTnet.wide.adjusted$main.slope)
+summary(ARTnet.wide.adjusted$casl.slope)
+
 table(ARTnet.wide.adjusted$main.slope, ARTnet.wide.adjusted$n.all)
+table(ARTnet.wide.adjusted$casl.slope, ARTnet.wide.adjusted$n.all)
 
-table(ARTnet.wide.adjusted$casl.slope, ARTnet.wide.adjusted$n.main)
-table(ARTnet.wide.adjusted$casl.slope, ARTnet.wide.adjusted$n.casl)
-table(ARTnet.wide.adjusted$casl.slope, ARTnet.wide.adjusted$n.one)
+# ----------------------------------------------------------------------------#
+# SUPPLEMENTAL FIGURE 6
+#-----------------------------------------------------------------------------#
 
-plot(ARTnet.wide.adjusted$n.all, ARTnet.wide.adjusted$main.slope)
-plot(ARTnet.wide.adjusted$n.all, ARTnet.wide.adjusted$casl.slope)
+png('SF6.png', width=2048, height=1536, res=300)
+plot(ARTnet.wide.adjusted$main.avgduration.yr, ARTnet.wide.adjusted$main.slope,
+     xlab="Average Duration of Main Relationships (Years)",
+     ylab="Difference in Degree of Main Relationships at 12- and 0-Month Offsets",
+     cex.lab = 0.75)
+dev.off()
 
-# Identify outliers
+# ----------------------------------------------------------------------------#
+# SUPPLEMENTAL FIGURE 7
+#-----------------------------------------------------------------------------#
 
-#main slope outliers
+png('SF7.png', width=2048, height=1536, res=300)
+plot(ARTnet.wide.adjusted$casl.avgduration.yr, ARTnet.wide.adjusted$casl.slope,
+     xlab="Average Duration of Casual Relationships (Years)",
+     ylab="Difference in Degree of Casual Relationships at 12- and 0-Month Offsets",
+     cex.lab = 0.75)
+dev.off()
+
+# ----------------------------------------------------------------------------#
+# SUPPLEMENTAL FIGURE 8
+#-----------------------------------------------------------------------------#
+
+png('SF8.png', width=2048, height=1536, res=300)
+plot(jitter(ARTnet.wide.adjusted$main.slope,0.1)~jitter(ARTnet.wide.adjusted$n.all, 0.1),
+     xlab="Total Number of Male Partners Reported", 
+     ylab="Difference in Degree of Main Relationships at 12- and 0-Month Offsets",
+     cex.lab = 0.75)
+dev.off()
+
+# ----------------------------------------------------------------------------#
+# SUPPLEMENTAL FIGURE 9
+#-----------------------------------------------------------------------------#
+
+png('SF9.png', width=2048, height=1536, res=300)
+plot(ARTnet.wide.adjusted$main.slope~ARTnet.wide.adjusted$M_MP12OANUM2,
+     xlab="Total Number of Male Partners", 
+     ylab="Difference in Degree of Main Relationships at 12- and 0-Month Offsets",
+     cex.lab = 0.75)
+dev.off()
+
+# ----------------------------------------------------------------------------#
+# SUPPLEMENTAL FIGURE 10
+#-----------------------------------------------------------------------------#
+
+png('SF10.png', width=2048, height=1536, res=300)
+plot(jitter(ARTnet.wide.adjusted$casl.slope,0.1)~jitter(ARTnet.wide.adjusted$n.all, 0.1),
+     xlab="Total Number of Male Partners Reported", 
+     ylab="Difference in Degree of Casual Relationships at 12- and 0-Month Offsets",
+     cex.lab = 0.75)
+dev.off()
+
+# ----------------------------------------------------------------------------#
+# SUPPLEMENTAL FIGURE 11
+#-----------------------------------------------------------------------------#
+
+png('SF11.png', width=2048, height=1536, res=300)
+plot(ARTnet.wide.adjusted$casl.slope~ARTnet.wide.adjusted$M_MP12OANUM2,
+     xlab="Total Number of Male Partners", 
+     ylab="Difference in Degree of Main Relationships at 12- and 0-Month Offsets",
+     cex.lab = 0.75)
+dev.off()
+
+# ----------------------------------------------------------------------------#
+# Examining the Partnership Duration and Number of Partners for Outliers
+# with Large Slope Absolute Values
+#-----------------------------------------------------------------------------#
+
+# Identify main slope outliers
 ARTnet.wide.adjusted %>%
   filter(!(main.slope %in% c(-1:1))) %>%
   select(AMIS_ID, main.slope)
 
-main.outliers <- ARTnet.long %>%
-  filter(AMIS_ID %in% c(2515935,3017617,27010355,2976652,32510928)) %>%
-  select(AMIS_ID, ptype, SUB_DATE, start.date.2, end.date.2) %>%
-  mutate(months.sub.start = (year(SUB_DATE) - year(start.date.2)) * 12 + month(SUB_DATE) - month(start.date.2),
-         months.sub.end = (year(SUB_DATE) - year(end.date.2)) * 12 + month(SUB_DATE) - month(end.date.2))
-
-#casual slope outliers
+# Identify casual slope outliers
 ARTnet.wide.adjusted %>%
   filter(!(casl.slope %in% c(-3:3))) %>%
   select(AMIS_ID, casl.slope) %>%
   print(n=22)
 
+# ----------------------------------------------------------------------------#
+# SUPPLEMENTAL FIGURE 12
+#-----------------------------------------------------------------------------#
+
+main.outliers <- ARTnet.long %>%
+  filter(AMIS_ID %in% c(2515935,3017617,27010355,2976652,32510928)) %>%
+  select(AMIS_ID, ptype, SUB_DATE, start.date.2, end.date.2, ONGOING) %>%
+  mutate(months.sub.start = (year(SUB_DATE) - year(start.date.2)) * 12 + month(SUB_DATE) - month(start.date.2),
+         months.sub.end = (year(SUB_DATE) - year(end.date.2)) * 12 + month(SUB_DATE) - month(end.date.2))
+
+# ----------------------------------------------------------------------------#
+# SUPPLEMENTAL FIGURE 13
+#-----------------------------------------------------------------------------#
+
 casl.outliers <- ARTnet.long %>%
   filter(AMIS_ID %in% c(2568904,26610093,2853178,263264,2997173)) %>%
-  select(AMIS_ID, ptype, SUB_DATE, start.date.2, end.date.2) %>%
+  select(AMIS_ID, ptype, SUB_DATE, start.date.2, end.date.2, ONGOING) %>%
   mutate(months.sub.start = (year(SUB_DATE) - year(start.date.2)) * 12 + month(SUB_DATE) - month(start.date.2),
          months.sub.end = (year(SUB_DATE) - year(end.date.2)) * 12 + month(SUB_DATE) - month(end.date.2))
 
 
-#####
-
-# scale up average main and causal duration to months and years
-ARTnet.wide.adjusted <- ARTnet.wide.adjusted %>%
-                            mutate(main.avgduration.mo = main.avgduration/4,
-                                   casl.avgduration.mo = casl.avgduration/4,
-                                   main.avgduration.yr = main.avgduration/52,
-                                   casl.avgduration.yr = casl.avgduration/52)
 
 
-# Multiple regression model
 
-main.multiple <- lm(main.slope ~ race.cat + age + main.avgduration.mo + n.all, data = ARTnet.wide.adjusted)
-summary(main.multiple)
-round(confint(main.multiple), 3)
 
-main.multiple.yr <- lm(main.slope ~ race.cat + age + main.avgduration.yr + n.all, data = ARTnet.wide.adjusted)
-summary(main.multiple.yr)
-round(confint(main.multiple.yr), 3)
-
-casl.multiple <- lm(casl.slope ~ race.cat + age + casl.avgduration.mo + n.all, data = ARTnet.wide.adjusted)
-summary(casl.multiple)
-round(confint(casl.multiple), 3)
-
-casl.multiple.yr <- lm(casl.slope ~ race.cat + age + casl.avgduration.yr + n.all, data = ARTnet.wide.adjusted)
-summary(casl.multiple.yr)
-round(confint(casl.multiple.yr), 3)
-
-summary(ARTnet.wide.adjusted$age)
 
 
 
