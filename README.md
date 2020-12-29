@@ -19,7 +19,7 @@ We used cross-sectional survey data from ARTnet, an internet-based study of MSM 
 
 ### Results
 
-Mean degree estimated with the day-of-survey method (1.19) was most similar to mean degree at 3- and 4-month offsets (1.20–1.19) across all partnerships ([Figure 1](https://github.com/EpiModel/Mean-Degree-Analysis/block/master/Figures/Figure1.png)). Day-of-survey mean degree was most similar to month-offsets for main partnerships between 0- and 2-month offsets (0.45 vs. 0.45–0.44) and for casual partnerships at 5- and 6-month offsets (0.75–0.73). Mean degree estimates declined as month offsets increased from 0 to 12 months, and multiple linear regression suggests this decline was associated with longer partnership duration and increased number of partnerships reported in the study ([Table 3](https://github.com/EpiModel/Mean-Degree-Analysis/block/master/Figures/Table_3.pdf)).  
+Mean degree estimated with the day-of-survey method (1.19) was most similar to mean degree at 3- and 4-month offsets (1.20–1.19) across all partnerships ([Figure 1](https://github.com/EpiModel/Mean-Degree-Analysis/blob/master/Figures/Figure1.png)). Day-of-survey mean degree was most similar to month-offsets for main partnerships between 0- and 2-month offsets (0.45 vs. 0.45–0.44) and for casual partnerships at 5- and 6-month offsets (0.75–0.73). Mean degree estimates declined as month offsets increased from 0 to 12 months, and multiple linear regression suggests this decline was associated with longer partnership duration and increased number of partnerships reported in the study ([Table 3](https://github.com/EpiModel/Mean-Degree-Analysis/blob/master/Figures/Table_3.pdf)).  
 
 ### Conclusions
 
