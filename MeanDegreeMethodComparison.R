@@ -945,8 +945,6 @@ main.multiple.yr3 <- lm(main.slope ~ race.cat + age + main.avgduration.yr + n.al
 summary(main.multiple.yr3)
 round(confint(main.multiple.yr3), 3)
 
-ARTnet.wide.adjusted$REGCODE
-
 #using total number of partnerships reported
 casl.multiple.yr <- lm(casl.slope ~ race.cat + age + casl.avgduration.yr + n.all, data = ARTnet.wide.adjusted)
 summary(casl.multiple.yr)
@@ -995,7 +993,7 @@ dev.off()
 #-----------------------------------------------------------------------------#
 
 png('SF8.png', width=2048, height=1536, res=300)
-plot(jitter(ARTnet.wide.adjusted$main.slope,0.1)~jitter(ARTnet.wide.adjusted$n.all, 0.1),
+plot(jitter(ARTnet.wide.adjusted$main.slope, 1)~jitter(ARTnet.wide.adjusted$n.all, 0.5),
      xlab="Total Number of Male Partners Reported", 
      ylab="Difference in Degree of Main Relationships at 12- and 0-Month Offsets",
      cex.lab = 0.75)
@@ -1017,7 +1015,7 @@ dev.off()
 #-----------------------------------------------------------------------------#
 
 png('SF10.png', width=2048, height=1536, res=300)
-plot(jitter(ARTnet.wide.adjusted$casl.slope,0.1)~jitter(ARTnet.wide.adjusted$n.all, 0.1),
+plot(jitter(ARTnet.wide.adjusted$casl.slope, 1)~jitter(ARTnet.wide.adjusted$n.all, 0.5),
      xlab="Total Number of Male Partners Reported", 
      ylab="Difference in Degree of Casual Relationships at 12- and 0-Month Offsets",
      cex.lab = 0.75)
@@ -1069,16 +1067,3 @@ casl.outliers <- ARTnet.long %>%
   select(AMIS_ID, ptype, SUB_DATE, start.date.2, end.date.2, ONGOING) %>%
   mutate(months.sub.start = (year(SUB_DATE) - year(start.date.2)) * 12 + month(SUB_DATE) - month(start.date.2),
          months.sub.end = (year(SUB_DATE) - year(end.date.2)) * 12 + month(SUB_DATE) - month(end.date.2))
-
-
-
-
-
-
-
-
-
-
-
-
-
