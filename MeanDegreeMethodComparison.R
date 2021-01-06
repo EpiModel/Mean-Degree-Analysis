@@ -89,7 +89,28 @@ addmargins(table(ARTnet.wide$HHINCOME_2, useNA = 'always'))
 addmargins(table(ARTnet.long$ptype, useNA = 'always'))
 
 # Self-reported ongoing status
-addmargins(table(ARTnet.long$ongoing, useNA = 'always'))
+addmargins(table(ARTnet.long$ongoing2, useNA = 'always'))
+
+# Check proportion of participants reporting 4-5 ongoing partners
+# on day of survey (included in discussion/limitations)
+
+temp_long <- ARTnet.long %>%
+  filter(ptype %in% c(1,2)) %>%
+  select(AMIS_ID, PARTNER_ID, ongoing2)
+temp_wide <- reshape(temp_long, idvar = "AMIS_ID", timevar = "PARTNER_ID", direction = "wide")
+
+temp_wide$ongoing2.1 <- ifelse(is.na(temp_wide$ongoing2.1), 0, temp_wide$ongoing2.1)
+temp_wide$ongoing2.2 <- ifelse(is.na(temp_wide$ongoing2.2), 0, temp_wide$ongoing2.1)
+temp_wide$ongoing2.3 <- ifelse(is.na(temp_wide$ongoing2.3), 0, temp_wide$ongoing2.1)
+temp_wide$ongoing2.4 <- ifelse(is.na(temp_wide$ongoing2.4), 0, temp_wide$ongoing2.1)
+temp_wide$ongoing2.5 <- ifelse(is.na(temp_wide$ongoing2.5), 0, temp_wide$ongoing2.1)
+
+temp_wide$ongoing_all <- temp_wide$ongoing2.1 + temp_wide$ongoing2.2 + temp_wide$ongoing2.3 +
+  temp_wide$ongoing2.4 + temp_wide$ongoing2.5
+
+temp_wide2 <- left_join(ARTnet.wide, temp_wide, by = "AMIS_ID")
+
+addmargins(table(temp_wide2$ongoing_all, useNA = "always"))
 
 # Mean (SD) duration of partnership
 mean(ARTnet.long$duration, na.rm = T)
