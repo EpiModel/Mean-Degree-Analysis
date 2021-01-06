@@ -89,14 +89,15 @@ addmargins(table(ARTnet.wide$HHINCOME_2, useNA = 'always'))
 addmargins(table(ARTnet.long$ptype, useNA = 'always'))
 
 # Self-reported ongoing status
-addmargins(table(ARTnet.long$ongoing2, useNA = 'always'))
+temp_long <- ARTnet.long %>%
+  filter(ptype %in% c(1,2)) %>%
+  select(AMIS_ID, PARTNER_ID, ongoing2, ptype)
+
+addmargins(table(temp_long$ongoing2, temp_long$ptype))
 
 # Check proportion of participants reporting 4-5 ongoing partners
 # on day of survey (included in discussion/limitations)
 
-temp_long <- ARTnet.long %>%
-  filter(ptype %in% c(1,2)) %>%
-  select(AMIS_ID, PARTNER_ID, ongoing2)
 temp_wide <- reshape(temp_long, idvar = "AMIS_ID", timevar = "PARTNER_ID", direction = "wide")
 
 temp_wide$ongoing2.1 <- ifelse(is.na(temp_wide$ongoing2.1), 0, temp_wide$ongoing2.1)
