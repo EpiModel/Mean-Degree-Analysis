@@ -996,7 +996,8 @@ png('SF6.png', width=2048, height=1536, res=300)
 plot(ARTnet.wide.adjusted$main.avgduration.yr, ARTnet.wide.adjusted$main.slope,
      xlab="Average Duration of Main Relationships (Years)",
      ylab="Difference in Degree of Main Relationships at 12- and 0-Month Offsets",
-     cex.lab = 0.75)
+     cex.lab = 0.75,
+     col = adjustcolor("black", alpha.f = 0.25))
 dev.off()
 
 # ----------------------------------------------------------------------------#
@@ -1007,7 +1008,8 @@ png('SF7.png', width=2048, height=1536, res=300)
 plot(ARTnet.wide.adjusted$casl.avgduration.yr, ARTnet.wide.adjusted$casl.slope,
      xlab="Average Duration of Casual Relationships (Years)",
      ylab="Difference in Degree of Casual Relationships at 12- and 0-Month Offsets",
-     cex.lab = 0.75)
+     cex.lab = 0.75,
+     col = adjustcolor("black", alpha.f = 0.25))
 dev.off()
 
 # ----------------------------------------------------------------------------#
@@ -1018,7 +1020,8 @@ png('SF8.png', width=2048, height=1536, res=300)
 plot(jitter(ARTnet.wide.adjusted$main.slope, 1)~jitter(ARTnet.wide.adjusted$n.all, 0.5),
      xlab="Total Number of Male Partners Reported", 
      ylab="Difference in Degree of Main Relationships at 12- and 0-Month Offsets",
-     cex.lab = 0.75)
+     cex.lab = 0.75,
+     col = adjustcolor("black", alpha.f = 0.15))
 dev.off()
 
 # ----------------------------------------------------------------------------#
@@ -1029,7 +1032,8 @@ png('SF9.png', width=2048, height=1536, res=300)
 plot(ARTnet.wide.adjusted$main.slope~ARTnet.wide.adjusted$M_MP12OANUM2,
      xlab="Total Number of Male Partners", 
      ylab="Difference in Degree of Main Relationships at 12- and 0-Month Offsets",
-     cex.lab = 0.75)
+     cex.lab = 0.75,
+     col = adjustcolor("black", alpha.f = 0.25))
 dev.off()
 
 # ----------------------------------------------------------------------------#
@@ -1040,7 +1044,8 @@ png('SF10.png', width=2048, height=1536, res=300)
 plot(jitter(ARTnet.wide.adjusted$casl.slope, 1)~jitter(ARTnet.wide.adjusted$n.all, 0.5),
      xlab="Total Number of Male Partners Reported", 
      ylab="Difference in Degree of Casual Relationships at 12- and 0-Month Offsets",
-     cex.lab = 0.75)
+     cex.lab = 0.75,
+     col = adjustcolor("black", alpha.f = 0.25))
 dev.off()
 
 # ----------------------------------------------------------------------------#
@@ -1051,7 +1056,8 @@ png('SF11.png', width=2048, height=1536, res=300)
 plot(ARTnet.wide.adjusted$casl.slope~ARTnet.wide.adjusted$M_MP12OANUM2,
      xlab="Total Number of Male Partners", 
      ylab="Difference in Degree of Main Relationships at 12- and 0-Month Offsets",
-     cex.lab = 0.75)
+     cex.lab = 0.75,
+     col = adjustcolor("black", alpha.f = 0.25))
 dev.off()
 
 # ----------------------------------------------------------------------------#
