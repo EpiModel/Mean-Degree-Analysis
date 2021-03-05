@@ -95,24 +95,6 @@ temp_long <- ARTnet.long %>%
 
 addmargins(table(temp_long$ongoing2, temp_long$ptype))
 
-# Check proportion of participants reporting 4-5 ongoing partners
-# on day of survey (included in discussion/limitations)
-
-temp_wide <- reshape(temp_long, idvar = "AMIS_ID", timevar = "PARTNER_ID", direction = "wide")
-
-temp_wide$ongoing2.1 <- ifelse(is.na(temp_wide$ongoing2.1), 0, temp_wide$ongoing2.1)
-temp_wide$ongoing2.2 <- ifelse(is.na(temp_wide$ongoing2.2), 0, temp_wide$ongoing2.1)
-temp_wide$ongoing2.3 <- ifelse(is.na(temp_wide$ongoing2.3), 0, temp_wide$ongoing2.1)
-temp_wide$ongoing2.4 <- ifelse(is.na(temp_wide$ongoing2.4), 0, temp_wide$ongoing2.1)
-temp_wide$ongoing2.5 <- ifelse(is.na(temp_wide$ongoing2.5), 0, temp_wide$ongoing2.1)
-
-temp_wide$ongoing_all <- temp_wide$ongoing2.1 + temp_wide$ongoing2.2 + temp_wide$ongoing2.3 +
-  temp_wide$ongoing2.4 + temp_wide$ongoing2.5
-
-temp_wide2 <- left_join(ARTnet.wide, temp_wide, by = "AMIS_ID")
-
-addmargins(table(temp_wide2$ongoing_all, useNA = "always"))
-
 # Mean (SD) duration of partnership
 mean(ARTnet.long$duration, na.rm = T)
 sd(ARTnet.long$duration, na.rm = T)
@@ -924,8 +906,9 @@ ARTnet.wide.adjusted %>%
 linear_reg <- function(outcome, exposure) {
   linear <- lm(outcome ~ exposure, data = ARTnet.wide.adjusted)
   s <- summary(linear)
+  c <- round(coef(linear), 2)
   r <- round(confint(linear), 2)
-  return(list(s,r))
+  return(list(s,c,r))
 }
 
 linear_reg(ARTnet.wide.adjusted$main.slope, ARTnet.wide.adjusted$race.cat)
@@ -1095,3 +1078,68 @@ casl.outliers <- ARTnet.long %>%
   select(AMIS_ID, ptype, SUB_DATE, start.date.2, end.date.2, ONGOING) %>%
   mutate(months.sub.start = (year(SUB_DATE) - year(start.date.2)) * 12 + month(SUB_DATE) - month(start.date.2),
          months.sub.end = (year(SUB_DATE) - year(end.date.2)) * 12 + month(SUB_DATE) - month(end.date.2))
+
+
+# ----------------------------------------------------------------------------#
+# SUPPLEMENTAL Analyses
+#-----------------------------------------------------------------------------#
+
+# Check proportion of participants reporting 4-5 ongoing partners
+# on day of survey (included in discussion/limitations)
+
+temp_wide <- reshape(temp_long, idvar = "AMIS_ID", timevar = "PARTNER_ID", direction = "wide")
+
+temp_wide$ongoing2.1 <- ifelse(is.na(temp_wide$ongoing2.1), 0, temp_wide$ongoing2.1)
+temp_wide$ongoing2.2 <- ifelse(is.na(temp_wide$ongoing2.2), 0, temp_wide$ongoing2.1)
+temp_wide$ongoing2.3 <- ifelse(is.na(temp_wide$ongoing2.3), 0, temp_wide$ongoing2.1)
+temp_wide$ongoing2.4 <- ifelse(is.na(temp_wide$ongoing2.4), 0, temp_wide$ongoing2.1)
+temp_wide$ongoing2.5 <- ifelse(is.na(temp_wide$ongoing2.5), 0, temp_wide$ongoing2.1)
+
+temp_wide$ongoing_all <- temp_wide$ongoing2.1 + temp_wide$ongoing2.2 + temp_wide$ongoing2.3 +
+  temp_wide$ongoing2.4 + temp_wide$ongoing2.5
+
+temp_wide2 <- left_join(ARTnet.wide.adjusted, temp_wide, by = "AMIS_ID")
+
+addmargins(table(temp_wide2$ongoing_all, useNA = "always"))
+
+# Create dichotomous variable for participants reporting 5 or fewer partners
+# overall compared with participants reporting more than 5 partners in the
+# past year overall
+
+temp_wide2$partners_bi <- ifelse(temp_wide2$M_MP12OANUM2 > 5, 1, 0)
+
+# Crosstab of the dichotomous 
+addmargins(table(temp_wide2$partners_bi, temp_wide2$n.all, useNA = "always"))
+
+# Create a new variable for levels of reported male partners
+ARTnet.wide.adjusted$total_part <- 
+  ifelse(ARTnet.wide.adjusted$n.all < 5, ARTnet.wide.adjusted$n.all, 
+         ifelse(ARTnet.wide.adjusted$M_MP12OANUM2 == 5, ARTnet.wide.adjusted$n.all,
+                "6+"))
+
+# Check variable
+table(ARTnet.wide.adjusted$total_part, temp_wide2$partners_bi)
+
+# Slope by new variable
+ARTnet.wide.adjusted %>%
+  group_by(total_part) %>%
+  summarize(mean.slope.m = mean(main.slope),
+            mean.slope.c = mean(casl.slope))
+
+# Linear Regression
+linear_reg(ARTnet.wide.adjusted$main.slope,ARTnet.wide.adjusted$total_part)
+linear_reg(ARTnet.wide.adjusted$casl.slope,ARTnet.wide.adjusted$total_part)
+
+MLR_1 <- lm(main.slope ~ race.cat + age + main.avgduration.yr + total_part, data = ARTnet.wide.adjusted)
+summary(MLR_1)
+round(coef(MLR_1), 2)
+round(confint(MLR_1), 2)
+
+MLR_2 <- lm(casl.slope ~ race.cat + age + casl.avgduration.yr + total_part, data = ARTnet.wide.adjusted)
+summary(MLR_2)
+round(coef(MLR_2), 2)
+round(confint(MLR_2), 2)
+
+
+
+
