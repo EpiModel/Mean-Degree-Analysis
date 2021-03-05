@@ -867,6 +867,32 @@ table(ARTnet.wide.adjusted$n.casl, useNA = "always")
 table(ARTnet.wide.adjusted$n.one, useNA = "always")
 table(ARTnet.wide.adjusted$n.all, useNA = "always")
 
+# Create dichotomous variable for participants reporting 5 or fewer partners
+# overall compared with participants reporting more than 5 partners in the
+# past year overall
+
+ARTnet.wide.adjusted$partners_bi <- ifelse(ARTnet.wide.adjusted$M_MP12OANUM2 > 5, 1, 0)
+
+# Crosstab of the dichotomous 
+addmargins(table(ARTnet.wide.adjusted$partners_bi, ARTnet.wide.adjusted$n.all, useNA = "always"))
+
+# Create a new dichotomous variable for participants reporting 5 or fewer partners
+# regardless of they have 5 or more total partners 
+# 0 = 5 or fewer partners
+# 1 = 6+ partners
+ARTnet.wide.adjusted$partners_bi2 <- 
+  ifelse(ARTnet.wide.adjusted$n.all < 5 & ARTnet.wide.adjusted$partners_bi == 1, 0, 
+         ifelse(ARTnet.wide.adjusted$partners_bi == 1, 1, 0))
+
+# Check variable
+table(ARTnet.wide.adjusted$partners_bi2, ARTnet.wide.adjusted$partners_bi)
+
+# Slope by new variable
+ARTnet.wide.adjusted %>%
+  group_by(total_part) %>%
+  summarize(mean.slope.m = mean(main.slope),
+            mean.slope.c = mean(casl.slope))
+
 # Add main.mean, casl.mean, and total.mean to ### Supplemental Table 1 ###
 
 mean(ARTnet.wide.adjusted$main.mean)
@@ -897,6 +923,7 @@ ARTnet.wide.adjusted %>%
   summarize(mean.main = mean(main.mean),
             mean.casl = mean(casl.mean))
 
+
 # ----------------------------------------------------------------------------#
 # TABLE 2
 #-----------------------------------------------------------------------------#
@@ -918,7 +945,7 @@ linear_reg(ARTnet.wide.adjusted$main.slope, factor(ARTnet.wide.adjusted$HHINCOME
 linear_reg(ARTnet.wide.adjusted$main.slope, factor(ARTnet.wide.adjusted$HLEDUCAT_2))
 linear_reg(ARTnet.wide.adjusted$main.slope, ARTnet.wide.adjusted$REGCODE)
 linear_reg(ARTnet.wide.adjusted$main.slope, ARTnet.wide.adjusted$main.avgduration.yr)
-linear_reg(ARTnet.wide.adjusted$main.slope, ARTnet.wide.adjusted$n.all)
+linear_reg(ARTnet.wide.adjusted$main.slope, ARTnet.wide.adjusted$partners_bi2)
 
 linear_reg(ARTnet.wide.adjusted$casl.slope, ARTnet.wide.adjusted$race.cat)
 linear_reg(ARTnet.wide.adjusted$casl.slope, ARTnet.wide.adjusted$age.cat)
@@ -927,7 +954,7 @@ linear_reg(ARTnet.wide.adjusted$casl.slope, factor(ARTnet.wide.adjusted$HHINCOME
 linear_reg(ARTnet.wide.adjusted$casl.slope, factor(ARTnet.wide.adjusted$HLEDUCAT_2))
 linear_reg(ARTnet.wide.adjusted$casl.slope, ARTnet.wide.adjusted$REGCODE)
 linear_reg(ARTnet.wide.adjusted$casl.slope, ARTnet.wide.adjusted$main.avgduration.yr)
-linear_reg(ARTnet.wide.adjusted$casl.slope, ARTnet.wide.adjusted$n.all)
+linear_reg(ARTnet.wide.adjusted$casl.slope, ARTnet.wide.adjusted$partners_bi2)
 
 # ----------------------------------------------------------------------------#
 # TABLE 3
@@ -935,30 +962,13 @@ linear_reg(ARTnet.wide.adjusted$casl.slope, ARTnet.wide.adjusted$n.all)
 
 # Multiple regression model
 
-#using total number of partnerships reported
-main.multiple.yr <- lm(main.slope ~ race.cat + age + main.avgduration.yr + n.all, data = ARTnet.wide.adjusted)
-summary(main.multiple.yr)
-round(confint(main.multiple.yr), 3)
+MLR_1 <- lm(main.slope ~ race.cat + age + main.avgduration.yr + partners_bi2, data = ARTnet.wide.adjusted)
+summary(MLR_1)
+round(confint(MLR_1), 2)
 
-#using total number of male partners
-main.multiple.yr2 <- lm(main.slope ~ race.cat + age + main.avgduration.yr + M_MP12OANUM2, data = ARTnet.wide.adjusted)
-summary(main.multiple.yr2)
-round(confint(main.multiple.yr2), 3)
-
-#using total number of partnerships reported
-main.multiple.yr3 <- lm(main.slope ~ race.cat + age + main.avgduration.yr + n.all + factor(HHINCOME_2) + factor(HLEDUCAT_2) + factor(REGCODE), data = ARTnet.wide.adjusted)
-summary(main.multiple.yr3)
-round(confint(main.multiple.yr3), 3)
-
-#using total number of partnerships reported
-casl.multiple.yr <- lm(casl.slope ~ race.cat + age + casl.avgduration.yr + n.all, data = ARTnet.wide.adjusted)
-summary(casl.multiple.yr)
-round(confint(casl.multiple.yr), 3)
-
-#using total number of male partners
-casl.multiple.yr2 <- lm(casl.slope ~ race.cat + age + casl.avgduration.yr + M_MP12OANUM2, data = ARTnet.wide.adjusted)
-summary(casl.multiple.yr2)
-round(confint(casl.multiple.yr2), 3)
+MLR_2 <- lm(casl.slope ~ race.cat + age + casl.avgduration.yr + partners_bi2, data = ARTnet.wide.adjusted)
+summary(MLR_2)
+round(confint(MLR_2), 2)
 
 # ----------------------------------------------------------------------------#
 # Exploring differences in stability of N-month offset by 
@@ -1101,45 +1111,5 @@ temp_wide$ongoing_all <- temp_wide$ongoing2.1 + temp_wide$ongoing2.2 + temp_wide
 temp_wide2 <- left_join(ARTnet.wide.adjusted, temp_wide, by = "AMIS_ID")
 
 addmargins(table(temp_wide2$ongoing_all, useNA = "always"))
-
-# Create dichotomous variable for participants reporting 5 or fewer partners
-# overall compared with participants reporting more than 5 partners in the
-# past year overall
-
-temp_wide2$partners_bi <- ifelse(temp_wide2$M_MP12OANUM2 > 5, 1, 0)
-
-# Crosstab of the dichotomous 
-addmargins(table(temp_wide2$partners_bi, temp_wide2$n.all, useNA = "always"))
-
-# Create a new variable for levels of reported male partners
-ARTnet.wide.adjusted$total_part <- 
-  ifelse(ARTnet.wide.adjusted$n.all < 5, ARTnet.wide.adjusted$n.all, 
-         ifelse(ARTnet.wide.adjusted$M_MP12OANUM2 == 5, ARTnet.wide.adjusted$n.all,
-                "6+"))
-
-# Check variable
-table(ARTnet.wide.adjusted$total_part, temp_wide2$partners_bi)
-
-# Slope by new variable
-ARTnet.wide.adjusted %>%
-  group_by(total_part) %>%
-  summarize(mean.slope.m = mean(main.slope),
-            mean.slope.c = mean(casl.slope))
-
-# Linear Regression
-linear_reg(ARTnet.wide.adjusted$main.slope,ARTnet.wide.adjusted$total_part)
-linear_reg(ARTnet.wide.adjusted$casl.slope,ARTnet.wide.adjusted$total_part)
-
-MLR_1 <- lm(main.slope ~ race.cat + age + main.avgduration.yr + total_part, data = ARTnet.wide.adjusted)
-summary(MLR_1)
-round(coef(MLR_1), 2)
-round(confint(MLR_1), 2)
-
-MLR_2 <- lm(casl.slope ~ race.cat + age + casl.avgduration.yr + total_part, data = ARTnet.wide.adjusted)
-summary(MLR_2)
-round(coef(MLR_2), 2)
-round(confint(MLR_2), 2)
-
-
 
 
