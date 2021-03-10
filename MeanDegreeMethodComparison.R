@@ -53,6 +53,7 @@ ARTnet.wide$age.cat <- ifelse(ARTnet.wide$age >= 15 & ARTnet.wide$age <= 24, '15
                        ifelse(ARTnet.wide$age >= 55 & ARTnet.wide$age <= 65, '55-65',
                        ifelse(ARTnet.wide$age >= 66, '66+', 'unknown'))))))
 
+
 addmargins(table(ARTnet.wide$age.cat, useNA = 'always'))
 
 # Race
@@ -889,9 +890,32 @@ table(ARTnet.wide.adjusted$partners_bi2, ARTnet.wide.adjusted$partners_bi)
 
 # Slope by new variable
 ARTnet.wide.adjusted %>%
+  group_by(partners_bi2) %>%
+  summarize(mean.slope.m = mean(main.slope),
+            mean.slope.c = mean(casl.slope))
+
+
+# Create a new variable for levels of reported male partners
+ARTnet.wide.adjusted$total_part <- 
+  ifelse(ARTnet.wide.adjusted$n.all < 5, ARTnet.wide.adjusted$n.all, 
+         ifelse(ARTnet.wide.adjusted$M_MP12OANUM2 == 5, ARTnet.wide.adjusted$n.all,
+                "6+"))
+
+# ----------------------------------------------------------------------------#
+# SUPPLEMENTAL TABLE 2
+#-----------------------------------------------------------------------------#
+
+# Check variable
+table(ARTnet.wide.adjusted$partners_bi, ARTnet.wide.adjusted$total_part)
+
+#-----------------------------------------------------------------------------#
+
+# Slope by new variable
+ARTnet.wide.adjusted %>%
   group_by(total_part) %>%
   summarize(mean.slope.m = mean(main.slope),
             mean.slope.c = mean(casl.slope))
+
 
 # Add main.mean, casl.mean, and total.mean to ### Supplemental Table 1 ###
 
@@ -922,7 +946,6 @@ ARTnet.wide.adjusted %>%
   group_by(HHINCOME_2) %>%
   summarize(mean.main = mean(main.mean),
             mean.casl = mean(casl.mean))
-
 
 # ----------------------------------------------------------------------------#
 # TABLE 2
@@ -957,6 +980,13 @@ linear_reg(ARTnet.wide.adjusted$casl.slope, ARTnet.wide.adjusted$main.avgduratio
 linear_reg(ARTnet.wide.adjusted$casl.slope, ARTnet.wide.adjusted$partners_bi2)
 
 # ----------------------------------------------------------------------------#
+# SUPPLEMENTAL TABLE 3
+#-----------------------------------------------------------------------------#
+
+linear_reg(ARTnet.wide.adjusted$main.slope, ARTnet.wide.adjusted$total_part)
+linear_reg(ARTnet.wide.adjusted$casl.slope, ARTnet.wide.adjusted$total_part)
+
+# ----------------------------------------------------------------------------#
 # TABLE 3
 #-----------------------------------------------------------------------------#
 
@@ -986,35 +1016,36 @@ table(ARTnet.wide.adjusted$casl.slope, ARTnet.wide.adjusted$n.all)
 #-----------------------------------------------------------------------------#
 
 png('SF6.png', width=2048, height=1536, res=300)
-plot(ARTnet.wide.adjusted$main.avgduration.yr, ARTnet.wide.adjusted$main.slope,
-     xlab="Average Duration of Main Relationships (Years)",
-     ylab="Difference in Degree of Main Relationships at 12- and 0-Month Offsets",
-     cex.lab = 0.75,
-     col = adjustcolor("black", alpha.f = 0.25))
+ggplot(ARTnet.wide.adjusted, aes(x = main.avgduration.yr, y = main.slope)) +
+  theme_classic() +
+  geom_point(alpha = 0.1, size = 3) +
+  xlab("Average Duration of Main Relationships (Years)") +
+  ylab("Change in Degree of Main Relationships at 12- and 0-Month Offsets")
 dev.off()
 
 # ----------------------------------------------------------------------------#
 # SUPPLEMENTAL FIGURE 7
 #-----------------------------------------------------------------------------#
 
-png('SF7.png', width=2048, height=1536, res=300)
-plot(ARTnet.wide.adjusted$casl.avgduration.yr, ARTnet.wide.adjusted$casl.slope,
-     xlab="Average Duration of Casual Relationships (Years)",
-     ylab="Difference in Degree of Casual Relationships at 12- and 0-Month Offsets",
-     cex.lab = 0.75,
-     col = adjustcolor("black", alpha.f = 0.25))
+png('SF7.png', width=2048, height=1550, res=300)
+ggplot(ARTnet.wide.adjusted, aes(x = casl.avgduration.yr, y = casl.slope)) +
+  theme_classic() +
+  geom_point(alpha = 0.1, size = 3) +
+  xlab("Average Duration of Casual Relationships (Years)") +
+  ylab("Change in Degree of Casual Relationships at 12- and 0-Month Offsets")
 dev.off()
+
 
 # ----------------------------------------------------------------------------#
 # SUPPLEMENTAL FIGURE 8
 #-----------------------------------------------------------------------------#
 
 png('SF8.png', width=2048, height=1536, res=300)
-plot(jitter(ARTnet.wide.adjusted$main.slope, 1)~jitter(ARTnet.wide.adjusted$n.all, 0.5),
-     xlab="Total Number of Male Partners Reported", 
-     ylab="Difference in Degree of Main Relationships at 12- and 0-Month Offsets",
-     cex.lab = 0.75,
-     col = adjustcolor("black", alpha.f = 0.15))
+ggplot(ARTnet.wide.adjusted, aes(x = n.all, y = main.slope)) +
+  theme_classic() +
+  geom_jitter(width = 0.1, height= 0.1, alpha=0.1, size = 3) +
+  xlab("Total Number of Male Partners Reported") +
+  ylab("Change in Degree of Main Relationships at 12- and 0-Month Offsets")
 dev.off()
 
 # ----------------------------------------------------------------------------#
@@ -1022,35 +1053,35 @@ dev.off()
 #-----------------------------------------------------------------------------#
 
 png('SF9.png', width=2048, height=1536, res=300)
-plot(ARTnet.wide.adjusted$main.slope~ARTnet.wide.adjusted$M_MP12OANUM2,
-     xlab="Total Number of Male Partners", 
-     ylab="Difference in Degree of Main Relationships at 12- and 0-Month Offsets",
-     cex.lab = 0.75,
-     col = adjustcolor("black", alpha.f = 0.25))
+ggplot(ARTnet.wide.adjusted, aes(x = total_part, y = main.slope)) +
+  theme_classic() +
+  geom_jitter(width = 0.1, height= 0.1, alpha=0.1, size = 3) +
+  xlab("Total Number of Male Partners in the Past 12 Months") +
+  ylab("Change in Degree of Main Relationships at 12- and 0-Month Offsets")
 dev.off()
 
 # ----------------------------------------------------------------------------#
 # SUPPLEMENTAL FIGURE 10
 #-----------------------------------------------------------------------------#
 
-png('SF10.png', width=2048, height=1536, res=300)
-plot(jitter(ARTnet.wide.adjusted$casl.slope, 1)~jitter(ARTnet.wide.adjusted$n.all, 0.5),
-     xlab="Total Number of Male Partners Reported", 
-     ylab="Difference in Degree of Casual Relationships at 12- and 0-Month Offsets",
-     cex.lab = 0.75,
-     col = adjustcolor("black", alpha.f = 0.25))
+png('SF10.png', width=2048, height=1550, res=300)
+ggplot(ARTnet.wide.adjusted, aes(x = n.all, y = casl.slope)) +
+  theme_classic() +
+  geom_jitter(width = 0.1, height= 0.1, alpha=0.1, size = 3) +
+  xlab("Total Number of Male Partners Reported") +
+  ylab("Change in Degree of Casual Relationships at 12- and 0-Month Offsets")
 dev.off()
 
 # ----------------------------------------------------------------------------#
 # SUPPLEMENTAL FIGURE 11
 #-----------------------------------------------------------------------------#
 
-png('SF11.png', width=2048, height=1536, res=300)
-plot(ARTnet.wide.adjusted$casl.slope~ARTnet.wide.adjusted$M_MP12OANUM2,
-     xlab="Total Number of Male Partners", 
-     ylab="Difference in Degree of Main Relationships at 12- and 0-Month Offsets",
-     cex.lab = 0.75,
-     col = adjustcolor("black", alpha.f = 0.25))
+png('SF11.png', width=2048, height=1550, res=300)
+ggplot(ARTnet.wide.adjusted, aes(x = total_part, y = casl.slope)) +
+  theme_classic() +
+  geom_jitter(width = 0.1, height= 0.1, alpha=0.1, size = 3) +
+  xlab("Total Number of Male Partners in the Past 12 Months") +
+  ylab("Change in Degree of Casual Relationships at 12- and 0-Month Offsets")
 dev.off()
 
 # ----------------------------------------------------------------------------#
@@ -1091,7 +1122,7 @@ casl.outliers <- ARTnet.long %>%
 
 
 # ----------------------------------------------------------------------------#
-# SUPPLEMENTAL Analyses
+# ADDITIONAL SUPPLEMENTAL ANALYSES
 #-----------------------------------------------------------------------------#
 
 # Check proportion of participants reporting 4-5 ongoing partners
