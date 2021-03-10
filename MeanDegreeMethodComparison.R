@@ -901,14 +901,9 @@ ARTnet.wide.adjusted$total_part <-
          ifelse(ARTnet.wide.adjusted$M_MP12OANUM2 == 5, ARTnet.wide.adjusted$n.all,
                 "6+"))
 
-# ----------------------------------------------------------------------------#
-# SUPPLEMENTAL TABLE 2
-#-----------------------------------------------------------------------------#
 
 # Check variable
 table(ARTnet.wide.adjusted$partners_bi, ARTnet.wide.adjusted$total_part)
-
-#-----------------------------------------------------------------------------#
 
 # Slope by new variable
 ARTnet.wide.adjusted %>%
@@ -946,6 +941,12 @@ ARTnet.wide.adjusted %>%
   group_by(HHINCOME_2) %>%
   summarize(mean.main = mean(main.mean),
             mean.casl = mean(casl.mean))
+
+# ----------------------------------------------------------------------------#
+# SUPPLEMENTAL TABLE 2
+#-----------------------------------------------------------------------------#
+
+table(ARTnet.wide.adjusted$partners_bi, ARTnet.wide.adjusted$n.all)
 
 # ----------------------------------------------------------------------------#
 # TABLE 2
