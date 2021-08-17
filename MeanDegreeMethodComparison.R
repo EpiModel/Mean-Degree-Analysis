@@ -6,7 +6,7 @@
 
 ## Load Data and Packages---------------------------------------------------------------------
 library(ARTnetData, warn.conflicts=F, quietly=T)
-library(dplyr, warn.conflicts=F, quietly=T)
+library(tidyverse, warn.conflicts=F, quietly=T)
 library(knitr, warn.conflicts=F, quietly=T)
 options(kableExtra.latex.load_packages = FALSE)
 library(kableExtra, warn.conflicts=F, quietly=T)
@@ -84,7 +84,7 @@ ARTnet.wide$HHINCOME_2 <- ifelse(ARTnet.wide$HHINCOME >= 77, NA, ARTnet.wide$HHI
 
 addmargins(table(ARTnet.wide$HHINCOME_2, useNA = 'always'))
 
-## Partnership-level characteristics
+### Partnership-level characteristics ###
 
 # Partnership type
 addmargins(table(ARTnet.long$ptype, useNA = 'always'))
@@ -96,12 +96,67 @@ temp_long <- ARTnet.long %>%
 
 addmargins(table(temp_long$ongoing2, temp_long$ptype))
 
-# Mean (SD) duration of partnership
+# Mean (SD) age of partnership
 mean(ARTnet.long$duration, na.rm = T)
 sd(ARTnet.long$duration, na.rm = T)
 
+ARTnet.wide <-
+  ARTnet.long %>%
+  filter(ptype == 1) %>%
+  group_by(AMIS_ID) %>%
+  summarise(n.main = n()) %>%
+  right_join(ARTnet.wide, by = "AMIS_ID")
+
+ARTnet.wide <-
+  ARTnet.long %>%
+  filter(ptype == 2) %>%
+  group_by(AMIS_ID) %>%
+  summarise(n.casl = n()) %>%
+  right_join(ARTnet.wide, by = "AMIS_ID")
+
+ARTnet.wide <-
+  ARTnet.long %>%
+  filter(ptype == 3) %>%
+  group_by(AMIS_ID) %>%
+  summarise(n.one = n()) %>%
+  right_join(ARTnet.wide, by = "AMIS_ID")
+
+# Replace NA's with 0
+ARTnet.wide$n.main[is.na(ARTnet.wide$n.main)] <- 0
+ARTnet.wide$n.casl[is.na(ARTnet.wide$n.casl)] <- 0
+ARTnet.wide$n.one[is.na(ARTnet.wide$n.one)] <- 0
+
+# Create variable for total partners reported
+ARTnet.wide$n.all <- ARTnet.wide$n.main + ARTnet.wide$n.casl + ARTnet.wide$n.one
+
+# Check data
+table(ARTnet.wide$n.main, useNA = "always")
+table(ARTnet.wide$n.casl, useNA = "always")
+table(ARTnet.wide$n.one, useNA = "always")
+table(ARTnet.wide$n.all, useNA = "always")
+
+# Create dichotomous variable for participants reporting 5 or fewer partners
+# overall compared with participants reporting more than 5 partners in the
+# past year overall
+
+ARTnet.wide$partners_bi <- ifelse(ARTnet.wide$M_MP12OANUM2 > 5, 1, 0)
+
+# Crosstab of the dichotomous 
+addmargins(table(ARTnet.wide$partners_bi, ARTnet.wide$n.all, useNA = "always"))
+
+# Create a new dichotomous variable for participants reporting 5 or fewer partners
+# regardless of they have 5 or more total partners 
+# 0 = 5 or fewer partners
+# 1 = 6+ partners
+ARTnet.wide$partners_bi2 <- 
+  ifelse(ARTnet.wide$n.all < 5 & ARTnet.wide$partners_bi == 1, 0, 
+         ifelse(ARTnet.wide$partners_bi == 1, 1, 0))
+
+# Check variable
+table(ARTnet.wide$partners_bi2, ARTnet.wide$partners_bi, useNA = "always")
+
 # ----------------------------------------------------------------------------#
-# Generalized Function for Day-of-Survey and Months-Offset Method
+# Generalized Function for Current and Retrospective Method
 #-----------------------------------------------------------------------------#
 
 # We calculate mean degree using the ARTnet long and wide datasets.
@@ -432,6 +487,9 @@ income <- income %>% filter(!is.na(var_val) &
 education <- n_month_offset(0,12,'HLEDUCAT_2')
 education <- education %>% filter(!is.na(var_val))
 
+partners_bi2 <- n_month_offset(0,12,'partners_bi2')
+partners_bi2 <- partners_bi2 %>% filter(!is.na(var_val))
+
 # ----------------------------------------------------------------------------#
 # Plot function for creating figures
 #-----------------------------------------------------------------------------#
@@ -563,7 +621,7 @@ plot_md_comparisons <- function(md_df, cat, labels) {
                           x = "Month Offset", y = "Mean Degree") +
                      scale_color_discrete(name=cat,
                                           labels=labels) +
-                     ylim(c(0.5, 1.6)) 
+                     ylim(c(0.5, 2)) 
 
       total_plot <- total_plot +
   geom_hline(data = md_df,
@@ -606,7 +664,7 @@ plot_md_comparisons <- function(md_df, cat, labels) {
                           x = "Month Offset", y = "Mean Degree") +
                      theme_minimal(base_size = 10) +
                      theme(legend.position = "none") +
-                     ylim(c(0.3, 1.25)) 
+                     ylim(c(0.3, 2)) 
 
        casl_plot <- casl_plot +
   geom_hline(data = md_df,
@@ -623,6 +681,7 @@ plot_md_comparisons <- function(md_df, cat, labels) {
       }
 
 }
+
 
 # ----------------------------------------------------------------------------#
 # FIGURE 1
@@ -687,6 +746,16 @@ plot_md_comparisons(income, "Annual Household Income",
                       "$20,000 to $39,999",
                       "$40,000 to $74,999",
                       "$75,000 or more"))
+dev.off()
+
+# ----------------------------------------------------------------------------#
+# SUPPLEMENTAL FIGURE 6
+#-----------------------------------------------------------------------------#
+
+png('SF6.png', width=2048, height=1536, res=300)
+plot_md_comparisons(partners_bi2, "Total Partners",
+                    c("5 or fewer", 
+                      "6 or more"))
 dev.off()
 
 # ----------------------------------------------------------------------------#
@@ -778,6 +847,10 @@ for (i in start_month_offset:end_month_offset) {
                                 "deg.casl.n.month"] <- deg.casl.n.month.name
 
 }
+
+## Cross-tab of ongoing vs ongoing at month 0
+
+addmargins(table(ARTnet.long.adjusted$ongoing3.m0, ARTnet.long.adjusted$ONGOING, useNA = "always"))
 
 # Create dependent variable: slope (difference in degree for main and casual relationships between 12 and 0 months)
 
@@ -1013,26 +1086,26 @@ table(ARTnet.wide.adjusted$main.slope, ARTnet.wide.adjusted$n.all)
 table(ARTnet.wide.adjusted$casl.slope, ARTnet.wide.adjusted$n.all)
 
 # ----------------------------------------------------------------------------#
-# SUPPLEMENTAL FIGURE 6
+# SUPPLEMENTAL FIGURE 7
 #-----------------------------------------------------------------------------#
 
-png('SF6.png', width=2048, height=1536, res=300)
+png('SF7.png', width=2048, height=1536, res=300)
 ggplot(ARTnet.wide.adjusted, aes(x = main.avgduration.yr, y = main.slope)) +
   theme_classic() +
   geom_point(alpha = 0.1, size = 3) +
-  xlab("Average Duration of Main Relationships (Years)") +
+  xlab("Mean Age of Main Relationships (Years)") +
   ylab("Change in Degree of Main Relationships at 12- and 0-Month Offsets")
 dev.off()
 
 # ----------------------------------------------------------------------------#
-# SUPPLEMENTAL FIGURE 7
+# SUPPLEMENTAL FIGURE 8
 #-----------------------------------------------------------------------------#
 
-png('SF7.png', width=2048, height=1550, res=300)
+png('SF8.png', width=2048, height=1550, res=300)
 ggplot(ARTnet.wide.adjusted, aes(x = casl.avgduration.yr, y = casl.slope)) +
   theme_classic() +
   geom_point(alpha = 0.1, size = 3) +
-  xlab("Average Duration of Casual Relationships (Years)") +
+  xlab("Mean Age of Casual Relationships (Years)") +
   ylab("Change in Degree of Casual Relationships at 12- and 0-Month Offsets")
 dev.off()
 
@@ -1143,5 +1216,65 @@ temp_wide$ongoing_all <- temp_wide$ongoing2.1 + temp_wide$ongoing2.2 + temp_wide
 temp_wide2 <- left_join(ARTnet.wide.adjusted, temp_wide, by = "AMIS_ID")
 
 addmargins(table(temp_wide2$ongoing_all, useNA = "always"))
+
+
+# ----------------------------------------------------------------------------#
+# SUPPLEMENTAL FIGURE 14
+#-----------------------------------------------------------------------------#
+
+ARTnet.wide.adjusted2 <- ARTnet.long.adjusted %>%
+  filter(RAI == 1 | IAI == 1 | ROI == 1 | IOI == 1) %>%
+  filter(ptype %in% c(1,2)) %>%
+  group_by(AMIS_ID) %>%
+  summarise(deg.total.dos = sum(ongoing2),
+            deg.total.6.month = sum(ongoing3.m6)) 
+
+x <- as.data.frame(table(ARTnet.wide.adjusted2$deg.total.dos))
+colnames(x) <- c("Degree", "Count")            
+
+y <- as.data.frame(table(ARTnet.wide.adjusted2$deg.total.6.month))
+colnames(y) <- c("Degree", "Count")
+
+z <- rbind(x, y)
+z$method <- rep(c("Current", "Retrospective"), each = 6)
+z <- z %>%
+  rowwise() %>%
+  group_by(method) %>%
+  mutate(perc = round(Count/sum(Count)*100,0))
+
+ggplot(z, aes(fill=Degree, y=Count, x=method)) +
+    geom_bar(position="fill", stat="identity") +
+    geom_text(aes(label = perc)) +
+    scale_fill_viridis_d() +
+    xlab("Method") +
+    ylab("Percent") +
+    theme_minimal() 
+
+png('SF14.png', width=2048, height=1550, res=300)
+ggplot(z, aes(fill=Degree, y=perc, x=method)) +
+  geom_bar(position="dodge", stat="identity") +
+  geom_text(aes(label = perc,
+                 perc = perc + 0.05),
+             position = position_dodge(0.9),
+             vjust = -0.5) +
+  scale_fill_viridis_d() +
+  xlab("Method") +
+  ylab("Percent") +
+  theme_minimal() 
+dev.off()
+
+png('SF14-2.png', width=2048, height=1550, res=300)
+ggplot(z, aes(fill=Degree, y=Count, x=method)) +
+  geom_bar(position="dodge", stat="identity") +
+  geom_text(aes(label = Count,
+                Count = Count + 0.05),
+            position = position_dodge(0.9),
+            vjust = -0.5) +
+  scale_fill_viridis_d() +
+  xlab("Method") +
+  ylab("Count") +
+  theme_minimal() 
+dev.off()
+
 
 
