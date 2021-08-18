@@ -29,12 +29,39 @@ ARTnet.long$end.date.2 <- ARTnet.long$end.date
 
 for (i in 1:nrow(ARTnet.long)) {
 
-  day(ARTnet.long[i,"start.date.2"]) <- sample(1:30, size=1, replace = T)
+  day(ARTnet.long[i,"end.date.2"]) <- 
+    
+    # randomly impute end date for those partnerships that are not "ongoing"
+    # not "ongoing" partnerships are allowed to end on day of survey
+    if(ARTnet.long[i, "end.date"] == ARTnet.long[i,"SUB_DATE"] & ARTnet.long[i, "ongoing2"] == 1){
+      day(ARTnet.long[i,"end.date"])}
+  
+        else if (ARTnet.long[i, "end.date"] == ARTnet.long[i,"SUB_DATE"] & ARTnet.long[i, "ongoing2"] == 0) {
+        sample(1:day(ARTnet.long[i, "SUB_DATE"]), size=1, replace = T)}
+          
+          # randomly impute all other days, but if month and year of survey date and end date are the same, 
+          # then impute day between number 1 and survey date day 
+          else if (month(ARTnet.long[i, "end.date"]) == month(ARTnet.long[i,"SUB_DATE"]) &
+                   year(ARTnet.long[i, "end.date"]) == year(ARTnet.long[i,"SUB_DATE"])){
+                     sample(1:day(ARTnet.long[i, "SUB_DATE"]), size=1, replace = T)}
+                     
+                     else {sample(1:30, size=1, replace = T)}
+  
+  #randomly impute start date such that start date is before the end date
+  day(ARTnet.long[i,"start.date.2"]) <-
+    ifelse(month(ARTnet.long[i, "end.date"]) == month(ARTnet.long[i, "start.date"]) &
+       year(ARTnet.long[i, "end.date"]) == year(ARTnet.long[i,"start.date"]),
+       sample(1:day(ARTnet.long[i,"end.date.2"]), size=1, replace = T),
+              sample(1:30, size=1, replace = T))
+  
+}
+    
 
-  day(ARTnet.long[i,"end.date.2"]) <- ifelse(day(ARTnet.long[i,"end.date"]) != day(ARTnet.long[i,"SUB_DATE"]),
-                                             sample(1:30, size=1, replace = T), day(ARTnet.long[i,"end.date.2"]))
-
-  }
+test <- ARTnet.long %>%
+  select(SUB_DATE, end.date, end.date.2, start.date.2, ptype, ongoing2) %>%
+  filter(month(end.date.2) == month(start.date.2) &
+           year(end.date.2) == year(start.date.2))
+  
 
 summary(day(ARTnet.long$start.date.2))
 summary(day(ARTnet.long$end.date.2))
@@ -255,8 +282,9 @@ n_month_offset <- function(start_month, end_month, filter_var='all',
       # this code calculates whether degree is 1 or 0 at specific N-month offset for each partnership
       # if N-month offset date falls within partnership duration then 1
       # if partnerships start OR end on N-month offset date then 1
-      # keep in mind that start dates are based on reported Month/Year and days are imputed to 15th of the month
-      # end dates are also imputed to 15th day of each month unless partnership is ongoing and end date is set to day of survey
+      # keep in mind that start dates and end dates have been randomly imputed
+      # end dates are also imputed unless partnership is ongoing and end date is set to day of survey
+      
       ongoing4 <- paste("ongoing4.m",i,sep="")
       names(ongoing4.df)[i - start_month_offset + 1] <- ongoing4
       assign(ongoing4, ifelse(is.na(ifelse(ARTnet.long.adjusted2$start.date.2 <=
@@ -1241,14 +1269,6 @@ z <- z %>%
   rowwise() %>%
   group_by(method) %>%
   mutate(perc = round(Count/sum(Count)*100,0))
-
-ggplot(z, aes(fill=Degree, y=Count, x=method)) +
-    geom_bar(position="fill", stat="identity") +
-    geom_text(aes(label = perc)) +
-    scale_fill_viridis_d() +
-    xlab("Method") +
-    ylab("Percent") +
-    theme_minimal() 
 
 png('SF14.png', width=2048, height=1550, res=300)
 ggplot(z, aes(fill=Degree, y=perc, x=method)) +
