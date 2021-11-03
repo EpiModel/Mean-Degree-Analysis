@@ -7,8 +7,6 @@
 ## Load Data and Packages---------------------------------------------------------------------
 library(ARTnetData, warn.conflicts=F, quietly=T)
 library(tidyverse, warn.conflicts=F, quietly=T)
-library(knitr, warn.conflicts=F, quietly=T)
-options(kableExtra.latex.load_packages = FALSE)
 library(kableExtra, warn.conflicts=F, quietly=T)
 library(lubridate)
 library(gridExtra)
@@ -21,7 +19,18 @@ ARTnet.long$ONGOING <- as.numeric(ARTnet.long$ONGOING)
 ARTnet.long$ongoing2 <- ifelse(is.na(ARTnet.long$ONGOING), 0, #set 3017 missing values to not ongoing
                                ARTnet.long$ONGOING)
 
-# Randomly impute days (1-30) for start dates and end dates that are not equal to SUB_DATE
+# Code for alternative definitions of ptype
+# Alternative = all ONGOING.orig == 1 partnerships are considered active even 
+# if partners only had sex with each other once
+
+ARTnet.long$ptype.alt <- ifelse(ARTnet.long$ONGOING.orig == 1, 2, 
+                                ARTnet.long$ptype)
+
+table(ARTnet.long$ptype, ARTnet.long$ptype.alt)
+
+# Imputing 
+
+# Code to randomly impute days for start dates and end dates
 set.seed(12345)
 
 ARTnet.long$start.date.2 <- ARTnet.long$start.date
@@ -56,15 +65,15 @@ for (i in 1:nrow(ARTnet.long)) {
   
 }
     
-
-test <- ARTnet.long %>%
-  select(SUB_DATE, end.date, end.date.2, start.date.2, ptype, ongoing2) %>%
-  filter(month(end.date.2) == month(start.date.2) &
-           year(end.date.2) == year(start.date.2))
-  
-
 summary(day(ARTnet.long$start.date.2))
 summary(day(ARTnet.long$end.date.2))
+
+# Make start date = end date for ptype == 3 (one-time partnerhips)
+
+ARTnet.long$start.date.2 <- ifelse(is.na(ARTnet.long$start.date.2), 
+                                   ARTnet.long$end.date.2, ARTnet.long$start.date.2)
+
+ARTnet.long$start.date.2 <- as_date(ARTnet.long$start.date.2)
 
 # ----------------------------------------------------------------------------#
 # TABLE 1 
@@ -692,7 +701,7 @@ plot_md_comparisons <- function(md_df, cat, labels) {
                           x = "Month Offset", y = "Mean Degree") +
                      theme_minimal(base_size = 10) +
                      theme(legend.position = "none") +
-                     ylim(c(0.3, 2)) 
+                     ylim(c(0.3, 1.5)) 
 
        casl_plot <- casl_plot +
   geom_hline(data = md_df,
@@ -1078,7 +1087,7 @@ linear_reg(ARTnet.wide.adjusted$casl.slope, ARTnet.wide.adjusted$age)
 linear_reg(ARTnet.wide.adjusted$casl.slope, factor(ARTnet.wide.adjusted$HHINCOME_2))
 linear_reg(ARTnet.wide.adjusted$casl.slope, factor(ARTnet.wide.adjusted$HLEDUCAT_2))
 linear_reg(ARTnet.wide.adjusted$casl.slope, ARTnet.wide.adjusted$REGCODE)
-linear_reg(ARTnet.wide.adjusted$casl.slope, ARTnet.wide.adjusted$main.avgduration.yr)
+linear_reg(ARTnet.wide.adjusted$casl.slope, ARTnet.wide.adjusted$casl.avgduration.yr)
 linear_reg(ARTnet.wide.adjusted$casl.slope, ARTnet.wide.adjusted$partners_bi2)
 
 # ----------------------------------------------------------------------------#
@@ -1139,10 +1148,10 @@ dev.off()
 
 
 # ----------------------------------------------------------------------------#
-# SUPPLEMENTAL FIGURE 8
+# SUPPLEMENTAL FIGURE 9
 #-----------------------------------------------------------------------------#
 
-png('SF8.png', width=2048, height=1536, res=300)
+png('SF9.png', width=2048, height=1536, res=300)
 ggplot(ARTnet.wide.adjusted, aes(x = n.all, y = main.slope)) +
   theme_classic() +
   geom_jitter(width = 0.1, height= 0.1, alpha=0.1, size = 3) +
@@ -1151,10 +1160,10 @@ ggplot(ARTnet.wide.adjusted, aes(x = n.all, y = main.slope)) +
 dev.off()
 
 # ----------------------------------------------------------------------------#
-# SUPPLEMENTAL FIGURE 9
+# SUPPLEMENTAL FIGURE 10
 #-----------------------------------------------------------------------------#
 
-png('SF9.png', width=2048, height=1536, res=300)
+png('SF10.png', width=2048, height=1536, res=300)
 ggplot(ARTnet.wide.adjusted, aes(x = total_part, y = main.slope)) +
   theme_classic() +
   geom_jitter(width = 0.1, height= 0.1, alpha=0.1, size = 3) +
@@ -1163,10 +1172,10 @@ ggplot(ARTnet.wide.adjusted, aes(x = total_part, y = main.slope)) +
 dev.off()
 
 # ----------------------------------------------------------------------------#
-# SUPPLEMENTAL FIGURE 10
+# SUPPLEMENTAL FIGURE 11
 #-----------------------------------------------------------------------------#
 
-png('SF10.png', width=2048, height=1550, res=300)
+png('SF11.png', width=2048, height=1550, res=300)
 ggplot(ARTnet.wide.adjusted, aes(x = n.all, y = casl.slope)) +
   theme_classic() +
   geom_jitter(width = 0.1, height= 0.1, alpha=0.1, size = 3) +
@@ -1175,10 +1184,10 @@ ggplot(ARTnet.wide.adjusted, aes(x = n.all, y = casl.slope)) +
 dev.off()
 
 # ----------------------------------------------------------------------------#
-# SUPPLEMENTAL FIGURE 11
+# SUPPLEMENTAL FIGURE 12
 #-----------------------------------------------------------------------------#
 
-png('SF11.png', width=2048, height=1550, res=300)
+png('SF12.png', width=2048, height=1550, res=300)
 ggplot(ARTnet.wide.adjusted, aes(x = total_part, y = casl.slope)) +
   theme_classic() +
   geom_jitter(width = 0.1, height= 0.1, alpha=0.1, size = 3) +
