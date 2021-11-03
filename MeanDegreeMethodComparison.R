@@ -41,12 +41,12 @@ for (i in 1:nrow(ARTnet.long)) {
   day(ARTnet.long[i,"end.date.2"]) <- 
     
     # randomly impute end date for those partnerships that are not "ongoing"
-    # not "ongoing" partnerships are allowed to end on day of survey
+    # not "ongoing" partnerships MUST end before day of survey
     if(ARTnet.long[i, "end.date"] == ARTnet.long[i,"SUB_DATE"] & ARTnet.long[i, "ongoing2"] == 1){
       day(ARTnet.long[i,"end.date"])}
   
         else if (ARTnet.long[i, "end.date"] == ARTnet.long[i,"SUB_DATE"] & ARTnet.long[i, "ongoing2"] == 0) {
-        sample(1:day(ARTnet.long[i, "SUB_DATE"]), size=1, replace = T)}
+        sample(1:(day(ARTnet.long[i, "SUB_DATE"]-1)), size=1, replace = T)}
           
           # randomly impute all other days, but if month and year of survey date and end date are the same, 
           # then impute day between number 1 and survey date day 
@@ -74,6 +74,12 @@ ARTnet.long$start.date.2 <- ifelse(is.na(ARTnet.long$start.date.2),
                                    ARTnet.long$end.date.2, ARTnet.long$start.date.2)
 
 ARTnet.long$start.date.2 <- as_date(ARTnet.long$start.date.2)
+
+# Check
+temp <- ARTnet.long %>%
+  select(ongoing2, SUB_DATE,start.date, end.date, start.date.2, end.date.2) %>%
+  filter(end.date == SUB_DATE & ongoing2 == 0)
+
 
 # ----------------------------------------------------------------------------#
 # TABLE 1 
