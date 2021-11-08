@@ -36,6 +36,7 @@ set.seed(12345)
 ARTnet.long$start.date.2 <- ARTnet.long$start.date
 ARTnet.long$end.date.2 <- ARTnet.long$end.date
 
+
 for (i in 1:nrow(ARTnet.long)) {
 
   day(ARTnet.long[i,"end.date.2"]) <- 
@@ -80,6 +81,23 @@ temp <- ARTnet.long %>%
   select(ongoing2, SUB_DATE,start.date, end.date, start.date.2, end.date.2) %>%
   filter(end.date == SUB_DATE & ongoing2 == 0)
 
+temp <- ARTnet.long %>%
+  filter(end.date.2 > SUB_DATE) %>%
+  select(AMIS_ID, PARTNER_ID, ongoing2, SUB_DATE,start.date, end.date, start.date.2, end.date.2)
+
+# Identified two ID's where ongoing=0, SUB_DATE=end.date, but end.date.2 is after SUB_DATE
+# This is because the SUB_DATE is the first of the month
+# manually change dates to random date the month prior
+
+# AMIS_ID = 2741475 and end.date.2 = "2018-10-25" and SUB_DATE = "2018-10-01"
+month(ARTnet.long$end.date.2[ARTnet.long$AMIS_ID==2741475 & ARTnet.long$PARTNER_ID==2]) <- 9
+day(ARTnet.long$end.date.2[ARTnet.long$AMIS_ID==2741475 & ARTnet.long$PARTNER_ID==2]) <- sample(1:30, size=1, replace=T)
+ARTnet.long$end.date.2[ARTnet.long$AMIS_ID==2741475 & ARTnet.long$PARTNER_ID==2]
+
+# AMIS_ID = 2986787 and end.date.2 = "2018-11-26" and SUB_DATE = "2018-11-01"
+month(ARTnet.long$end.date.2[ARTnet.long$AMIS_ID==2986787 & ARTnet.long$PARTNER_ID==1]) <- 10
+day(ARTnet.long$end.date.2[ARTnet.long$AMIS_ID==2986787 & ARTnet.long$PARTNER_ID==1]) <- sample(1:30, size=1, replace=T)
+ARTnet.long$end.date.2[ARTnet.long$AMIS_ID==2986787 & ARTnet.long$PARTNER_ID==1]
 
 # ----------------------------------------------------------------------------#
 # TABLE 1 
