@@ -19,6 +19,10 @@ ARTnet.long$ONGOING <- as.numeric(ARTnet.long$ONGOING)
 ARTnet.long$ongoing2 <- ifelse(is.na(ARTnet.long$ONGOING), 0, #set 3017 missing values to not ongoing
                                ARTnet.long$ONGOING)
 
+# Exclude observations where start.date > end.date
+ARTnet.long <- ARTnet.long %>%
+  filter(start.date <= end.date | is.na(start.date))
+  
 # Code for alternative definitions of ptype
 # Alternative = all ONGOING.orig == 1 partnerships are considered active even 
 # if partners only had sex with each other once
@@ -28,7 +32,7 @@ ARTnet.long$ptype.alt <- ifelse(ARTnet.long$ONGOING.orig == 1, 2,
 
 table(ARTnet.long$ptype, ARTnet.long$ptype.alt)
 
-# Imputing 
+
 
 # Code to randomly impute days for start dates and end dates
 set.seed(12345)
@@ -47,30 +51,38 @@ for (i in 1:nrow(ARTnet.long)) {
       day(ARTnet.long[i,"end.date"])}
   
         else if (ARTnet.long[i, "end.date"] == ARTnet.long[i,"SUB_DATE"] & ARTnet.long[i, "ongoing2"] == 0) {
-        sample(1:(day(ARTnet.long[i, "SUB_DATE"]-1)), size=1, replace = T)}
+        sample(1:(day(ARTnet.long[i, "SUB_DATE"])-1), size=1, replace = T)}
           
+          # if month and year are the same for end.date and SUB_DATE for not ongoing partnerships
+          # make sure the partnership ends before the SUB_DATE
+          else if (month(ARTnet.long[i, "end.date"]) == month(ARTnet.long[i,"SUB_DATE"]) &
+          year(ARTnet.long[i, "end.date"]) == year(ARTnet.long[i,"SUB_DATE"]) & ARTnet.long[i, "ongoing2"] == 0 ){
+          sample(1:(day(ARTnet.long[i, "SUB_DATE"])-1), size=1, replace = T)}
+  
           # randomly impute all other days, but if month and year of survey date and end date are the same, 
           # then impute day between number 1 and survey date day 
           else if (month(ARTnet.long[i, "end.date"]) == month(ARTnet.long[i,"SUB_DATE"]) &
                    year(ARTnet.long[i, "end.date"]) == year(ARTnet.long[i,"SUB_DATE"])){
-                     sample(1:day(ARTnet.long[i, "SUB_DATE"]), size=1, replace = T)}
+                   sample(1:day(ARTnet.long[i, "SUB_DATE"]), size=1, replace = T)}
                      
                      else {sample(1:30, size=1, replace = T)}
+  
+
   
   #randomly impute start date such that start date is before the end date
   day(ARTnet.long[i,"start.date.2"]) <-
     ifelse(month(ARTnet.long[i, "end.date"]) == month(ARTnet.long[i, "start.date"]) &
        year(ARTnet.long[i, "end.date"]) == year(ARTnet.long[i,"start.date"]),
-       sample(1:day(ARTnet.long[i,"end.date.2"]), size=1, replace = T),
+       sample(1:(day(ARTnet.long[i,"end.date.2"])-1), size=1, replace = T),
               sample(1:30, size=1, replace = T))
   
+  
 }
-    
+
 summary(day(ARTnet.long$start.date.2))
 summary(day(ARTnet.long$end.date.2))
 
 # Make start date = end date for ptype == 3 (one-time partnerhips)
-
 ARTnet.long$start.date.2 <- ifelse(is.na(ARTnet.long$start.date.2), 
                                    ARTnet.long$end.date.2, ARTnet.long$start.date.2)
 
@@ -78,26 +90,36 @@ ARTnet.long$start.date.2 <- as_date(ARTnet.long$start.date.2)
 
 # Check
 temp <- ARTnet.long %>%
-  select(ongoing2, SUB_DATE,start.date, end.date, start.date.2, end.date.2) %>%
-  filter(end.date == SUB_DATE & ongoing2 == 0)
-
-temp <- ARTnet.long %>%
   filter(end.date.2 > SUB_DATE) %>%
-  select(AMIS_ID, PARTNER_ID, ongoing2, SUB_DATE,start.date, end.date, start.date.2, end.date.2)
+  select(AMIS_ID, PARTNER_ID, ptype, ongoing2, SUB_DATE,start.date, end.date, start.date.2, end.date.2)
 
-# Identified two ID's where ongoing=0, SUB_DATE=end.date, but end.date.2 is after SUB_DATE
-# This is because the SUB_DATE is the first of the month
+temp1 <- ARTnet.long %>%
+  filter(start.date.2 > end.date.2) %>%
+  select(AMIS_ID, PARTNER_ID, ptype, ongoing2, SUB_DATE,start.date, end.date, start.date.2, end.date.2)
+
+temp2 <- ARTnet.long %>%
+  filter(start.date > end.date) %>%
+  select(AMIS_ID, PARTNER_ID, ptype, ongoing2, SUB_DATE,start.date, end.date, start.date.2, end.date.2)
+
+temp3 <- ARTnet.long %>%
+  filter(end.date.2 == SUB_DATE & ongoing2 == 0) %>%
+  select(AMIS_ID, PARTNER_ID, ptype, ongoing2, SUB_DATE,start.date, end.date, start.date.2, end.date.2)
+
+temp4 <- ARTnet.long %>%
+  filter(start.date.2 > SUB_DATE) %>%
+  select(AMIS_ID, PARTNER_ID, ptype, ongoing2, SUB_DATE,start.date, end.date, start.date.2, end.date.2)
+
+
+# Identified one ID's where ongoing=0, SUB_DATE=end.date, but end.date.2 == SUB_DATE
+# not sure why
 # manually change dates to random date the month prior
-
-# AMIS_ID = 2741475 and end.date.2 = "2018-10-25" and SUB_DATE = "2018-10-01"
-month(ARTnet.long$end.date.2[ARTnet.long$AMIS_ID==2741475 & ARTnet.long$PARTNER_ID==2]) <- 9
-day(ARTnet.long$end.date.2[ARTnet.long$AMIS_ID==2741475 & ARTnet.long$PARTNER_ID==2]) <- sample(1:30, size=1, replace=T)
-ARTnet.long$end.date.2[ARTnet.long$AMIS_ID==2741475 & ARTnet.long$PARTNER_ID==2]
 
 # AMIS_ID = 2986787 and end.date.2 = "2018-11-26" and SUB_DATE = "2018-11-01"
 month(ARTnet.long$end.date.2[ARTnet.long$AMIS_ID==2986787 & ARTnet.long$PARTNER_ID==1]) <- 10
 day(ARTnet.long$end.date.2[ARTnet.long$AMIS_ID==2986787 & ARTnet.long$PARTNER_ID==1]) <- sample(1:30, size=1, replace=T)
 ARTnet.long$end.date.2[ARTnet.long$AMIS_ID==2986787 & ARTnet.long$PARTNER_ID==1]
+
+
 
 # ----------------------------------------------------------------------------#
 # TABLE 1 
@@ -156,10 +178,8 @@ temp_long <- ARTnet.long %>%
 
 addmargins(table(temp_long$ongoing2, temp_long$ptype))
 
-# Mean (SD) age of partnership
-mean(ARTnet.long$duration, na.rm = T)
-sd(ARTnet.long$duration, na.rm = T)
-
+# Create new variables for number of main, casual, and one-time
+# partnerships per participant
 ARTnet.wide <-
   ARTnet.long %>%
   filter(ptype == 1) %>%
@@ -214,6 +234,10 @@ ARTnet.wide$partners_bi2 <-
 
 # Check variable
 table(ARTnet.wide$partners_bi2, ARTnet.wide$partners_bi, useNA = "always")
+
+# For table 1
+
+addmargins(table(ARTnet.wide$partners_bi2, useNA = "always"))
 
 # ----------------------------------------------------------------------------#
 # Generalized Function for Current and Retrospective Method
@@ -757,6 +781,16 @@ dev.off()
 #-----------------------------------------------------------------------------#
 
 png('Figure2.png', width=2048, height=1536, res=300)
+plot_md_comparisons(partners_bi2, "Total Partners",
+                    c("5 or fewer", 
+                      "6 or more"))
+dev.off()
+
+# ----------------------------------------------------------------------------#
+# SUPPLEMENTAL FIGURE 1
+#-----------------------------------------------------------------------------#
+
+png('SF2.png', width=2048, height=1536, res=300)
 plot_md_comparisons(race.cat, "Race/Ethnicity",
                     c("Black","Hispanic", "Other", "White"))
 dev.off()
@@ -765,7 +799,7 @@ dev.off()
 # SUPPLEMENTAL FIGURE 2
 #-----------------------------------------------------------------------------#
 
-png('SF2.png', width=2048, height=1536, res=300)
+png('SF3.png', width=2048, height=1536, res=300)
 plot_md_comparisons(age.cat, "Age Category",
                     c("15-24 years",
                       "25-34 years",
@@ -778,7 +812,7 @@ dev.off()
 # SUPPLEMENTAL FIGURE 3
 #-----------------------------------------------------------------------------#
 
-png('SF3.png', width=2048, height=1536, res=300)
+png('SF4.png', width=2048, height=1536, res=300)
 plot_md_comparisons(region, "Census Region",
                     c("Northeast",
                       "Midwest",
@@ -790,7 +824,7 @@ dev.off()
 # SUPPLEMENTAL FIGURE 4
 #-----------------------------------------------------------------------------#
 
-png('SF4.png', width=2900, height=1600, res=350)
+png('SF5.png', width=2900, height=1600, res=350)
 plot_md_comparisons(education, "Education Level",
                     c("High school or below",
                       "Some college",
@@ -801,22 +835,12 @@ dev.off()
 # SUPPLEMENTAL FIGURE 5
 #-----------------------------------------------------------------------------#
 
-png('SF5.png', width=3000, height=1600, res=300)
+png('SF6.png', width=3000, height=1600, res=300)
 plot_md_comparisons(income, "Annual Household Income",
                     c("$0 to $19,999",
                       "$20,000 to $39,999",
                       "$40,000 to $74,999",
                       "$75,000 or more"))
-dev.off()
-
-# ----------------------------------------------------------------------------#
-# SUPPLEMENTAL FIGURE 6
-#-----------------------------------------------------------------------------#
-
-png('SF6.png', width=2048, height=1536, res=300)
-plot_md_comparisons(partners_bi2, "Total Partners",
-                    c("5 or fewer", 
-                      "6 or more"))
 dev.off()
 
 # ----------------------------------------------------------------------------#
@@ -936,34 +960,6 @@ ARTnet.wide.adjusted <- ARTnet.wide.adjusted %>%
                                                  deg.casl.n.month.m8 + deg.casl.n.month.m9 + deg.casl.n.month.m10 + 
                                                  deg.casl.n.month.m11 + deg.casl.n.month.m12)/13)
 
-# Add mean duration of relationships to ARTnet.wide.adjusted
-ARTnet.wide.adjusted <- ARTnet.long.adjusted %>%
-  filter(RAI == 1 | IAI == 1 | ROI == 1 | IOI == 1) %>%
-  filter(ptype == 1) %>%
-  group_by(AMIS_ID) %>%
-  summarise(main.avgduration = mean(duration)) %>%
-  right_join(ARTnet.wide.adjusted, by = "AMIS_ID")
-
-ARTnet.wide.adjusted <- ARTnet.long.adjusted %>%
-  filter(RAI == 1 | IAI == 1 | ROI == 1 | IOI == 1) %>%
-  filter(ptype == 2) %>%
-  group_by(AMIS_ID) %>%
-  summarise(casl.avgduration = mean(duration)) %>%
-  right_join(ARTnet.wide.adjusted, by = "AMIS_ID")
-
-# Scale up average main and causal duration to months and years
-ARTnet.wide.adjusted <- ARTnet.wide.adjusted %>%
-  mutate(main.avgduration.mo = main.avgduration/4,
-         casl.avgduration.mo = casl.avgduration/4,
-         main.avgduration.yr = main.avgduration/52,
-         casl.avgduration.yr = casl.avgduration/52)
-
-summary(ARTnet.wide.adjusted$main.avgduration)
-summary(ARTnet.wide.adjusted$casl.avgduration)
-summary(ARTnet.wide.adjusted$main.avgduration.mo)
-summary(ARTnet.wide.adjusted$casl.avgduration.mo)
-summary(ARTnet.wide.adjusted$main.avgduration.yr)
-summary(ARTnet.wide.adjusted$casl.avgduration.yr)
 
 # Create variables for number of main, casual, and one-time partners reported
 
@@ -996,33 +992,36 @@ ARTnet.wide.adjusted$n.one[is.na(ARTnet.wide.adjusted$n.one)] <- 0
 # Create variable for total partners reported
 ARTnet.wide.adjusted$n.all <- ARTnet.wide.adjusted$n.main + ARTnet.wide.adjusted$n.casl + ARTnet.wide.adjusted$n.one
 
+# Create variable for total main + casual partners reported
+ARTnet.wide.adjusted$n.mc <- ARTnet.wide.adjusted$n.main + ARTnet.wide.adjusted$n.casl
+
 # Check data
 table(ARTnet.wide.adjusted$n.main, useNA = "always")
 table(ARTnet.wide.adjusted$n.casl, useNA = "always")
 table(ARTnet.wide.adjusted$n.one, useNA = "always")
 table(ARTnet.wide.adjusted$n.all, useNA = "always")
+table(ARTnet.wide.adjusted$n.mc, useNA = "always")
 
-# Create dichotomous variable for participants reporting 5 or fewer partners
-# overall compared with participants reporting more than 5 partners in the
-# past year overall
 
-ARTnet.wide.adjusted$partners_bi <- ifelse(ARTnet.wide.adjusted$M_MP12OANUM2 > 5, 1, 0)
+# ----------------------------------------------------------------------------#
+# SUPPLEMENTAL TABLE 3
+#-----------------------------------------------------------------------------#
 
-# Crosstab of the dichotomous 
+# Crosstab of the dichotomous partners variable and total partners reported for all, main, and casual
+
 addmargins(table(ARTnet.wide.adjusted$partners_bi, ARTnet.wide.adjusted$n.all, useNA = "always"))
 
-# Create a new dichotomous variable for participants reporting 5 or fewer partners
-# regardless of they have 5 or more total partners 
-# 0 = 5 or fewer partners
-# 1 = 6+ partners
-ARTnet.wide.adjusted$partners_bi2 <- 
-  ifelse(ARTnet.wide.adjusted$n.all < 5 & ARTnet.wide.adjusted$partners_bi == 1, 0, 
-         ifelse(ARTnet.wide.adjusted$partners_bi == 1, 1, 0))
+addmargins(table(ARTnet.wide.adjusted$partners_bi, ARTnet.wide.adjusted$n.mc, useNA = "always"))
 
-# Check variable
-table(ARTnet.wide.adjusted$partners_bi2, ARTnet.wide.adjusted$partners_bi)
+addmargins(table(ARTnet.wide.adjusted$partners_bi, ARTnet.wide.adjusted$n.main, useNA = "always"))
 
-# Slope by new variable
+addmargins(table(ARTnet.wide.adjusted$partners_bi, ARTnet.wide.adjusted$n.casl, useNA = "always"))
+
+#-----------------------------------------------------------------------------#
+
+# Calculcate the prevalence of truncation for each count
+
+# Slope by binary partners variable
 ARTnet.wide.adjusted %>%
   group_by(partners_bi2) %>%
   summarize(mean.slope.m = mean(main.slope),
@@ -1077,12 +1076,6 @@ ARTnet.wide.adjusted %>%
             mean.casl = mean(casl.mean))
 
 # ----------------------------------------------------------------------------#
-# SUPPLEMENTAL TABLE 2
-#-----------------------------------------------------------------------------#
-
-table(ARTnet.wide.adjusted$partners_bi, ARTnet.wide.adjusted$n.all)
-
-# ----------------------------------------------------------------------------#
 # TABLE 2
 #-----------------------------------------------------------------------------#
 
@@ -1102,7 +1095,6 @@ linear_reg(ARTnet.wide.adjusted$main.slope, ARTnet.wide.adjusted$age)
 linear_reg(ARTnet.wide.adjusted$main.slope, factor(ARTnet.wide.adjusted$HHINCOME_2))
 linear_reg(ARTnet.wide.adjusted$main.slope, factor(ARTnet.wide.adjusted$HLEDUCAT_2))
 linear_reg(ARTnet.wide.adjusted$main.slope, ARTnet.wide.adjusted$REGCODE)
-linear_reg(ARTnet.wide.adjusted$main.slope, ARTnet.wide.adjusted$main.avgduration.yr)
 linear_reg(ARTnet.wide.adjusted$main.slope, ARTnet.wide.adjusted$partners_bi2)
 
 linear_reg(ARTnet.wide.adjusted$casl.slope, ARTnet.wide.adjusted$race.cat)
@@ -1111,7 +1103,6 @@ linear_reg(ARTnet.wide.adjusted$casl.slope, ARTnet.wide.adjusted$age)
 linear_reg(ARTnet.wide.adjusted$casl.slope, factor(ARTnet.wide.adjusted$HHINCOME_2))
 linear_reg(ARTnet.wide.adjusted$casl.slope, factor(ARTnet.wide.adjusted$HLEDUCAT_2))
 linear_reg(ARTnet.wide.adjusted$casl.slope, ARTnet.wide.adjusted$REGCODE)
-linear_reg(ARTnet.wide.adjusted$casl.slope, ARTnet.wide.adjusted$casl.avgduration.yr)
 linear_reg(ARTnet.wide.adjusted$casl.slope, ARTnet.wide.adjusted$partners_bi2)
 
 # ----------------------------------------------------------------------------#
@@ -1127,17 +1118,19 @@ linear_reg(ARTnet.wide.adjusted$casl.slope, ARTnet.wide.adjusted$total_part)
 
 # Multiple regression model
 
-MLR_1 <- lm(main.slope ~ race.cat + age + main.avgduration.yr + partners_bi2, data = ARTnet.wide.adjusted)
+MLR_1 <- lm(main.slope ~ partners_bi2 + race.cat + age + 
+              factor(HLEDUCAT_2), data = ARTnet.wide.adjusted)
 summary(MLR_1)
 round(confint(MLR_1), 2)
 
-MLR_2 <- lm(casl.slope ~ race.cat + age + casl.avgduration.yr + partners_bi2, data = ARTnet.wide.adjusted)
+MLR_2 <- lm(casl.slope ~ partners_bi2 + race.cat + age + 
+              factor(HLEDUCAT_2), data = ARTnet.wide.adjusted)
 summary(MLR_2)
 round(confint(MLR_2), 2)
 
 # ----------------------------------------------------------------------------#
 # Exploring differences in stability of N-month offset by 
-# number of partnerships reported and partnership duration
+# number of partnerships reported 
 #-----------------------------------------------------------------------------#
 
 summary(ARTnet.wide.adjusted$main.slope)
@@ -1150,43 +1143,6 @@ table(ARTnet.wide.adjusted$casl.slope, ARTnet.wide.adjusted$n.all)
 # SUPPLEMENTAL FIGURE 7
 #-----------------------------------------------------------------------------#
 
-png('SF7.png', width=2048, height=1536, res=300)
-ggplot(ARTnet.wide.adjusted, aes(x = main.avgduration.yr, y = main.slope)) +
-  theme_classic() +
-  geom_point(alpha = 0.1, size = 3) +
-  xlab("Mean Age of Main Relationships (Years)") +
-  ylab("Change in Degree of Main Relationships at 12- and 0-Month Offsets")
-dev.off()
-
-# ----------------------------------------------------------------------------#
-# SUPPLEMENTAL FIGURE 8
-#-----------------------------------------------------------------------------#
-
-png('SF8.png', width=2048, height=1550, res=300)
-ggplot(ARTnet.wide.adjusted, aes(x = casl.avgduration.yr, y = casl.slope)) +
-  theme_classic() +
-  geom_point(alpha = 0.1, size = 3) +
-  xlab("Mean Age of Casual Relationships (Years)") +
-  ylab("Change in Degree of Casual Relationships at 12- and 0-Month Offsets")
-dev.off()
-
-
-# ----------------------------------------------------------------------------#
-# SUPPLEMENTAL FIGURE 9
-#-----------------------------------------------------------------------------#
-
-png('SF9.png', width=2048, height=1536, res=300)
-ggplot(ARTnet.wide.adjusted, aes(x = n.all, y = main.slope)) +
-  theme_classic() +
-  geom_jitter(width = 0.1, height= 0.1, alpha=0.1, size = 3) +
-  xlab("Total Number of Male Partners Reported") +
-  ylab("Change in Degree of Main Relationships at 12- and 0-Month Offsets")
-dev.off()
-
-# ----------------------------------------------------------------------------#
-# SUPPLEMENTAL FIGURE 10
-#-----------------------------------------------------------------------------#
-
 png('SF10.png', width=2048, height=1536, res=300)
 ggplot(ARTnet.wide.adjusted, aes(x = total_part, y = main.slope)) +
   theme_classic() +
@@ -1196,19 +1152,7 @@ ggplot(ARTnet.wide.adjusted, aes(x = total_part, y = main.slope)) +
 dev.off()
 
 # ----------------------------------------------------------------------------#
-# SUPPLEMENTAL FIGURE 11
-#-----------------------------------------------------------------------------#
-
-png('SF11.png', width=2048, height=1550, res=300)
-ggplot(ARTnet.wide.adjusted, aes(x = n.all, y = casl.slope)) +
-  theme_classic() +
-  geom_jitter(width = 0.1, height= 0.1, alpha=0.1, size = 3) +
-  xlab("Total Number of Male Partners Reported") +
-  ylab("Change in Degree of Casual Relationships at 12- and 0-Month Offsets")
-dev.off()
-
-# ----------------------------------------------------------------------------#
-# SUPPLEMENTAL FIGURE 12
+# SUPPLEMENTAL FIGURE 8
 #-----------------------------------------------------------------------------#
 
 png('SF12.png', width=2048, height=1550, res=300)
@@ -1217,6 +1161,44 @@ ggplot(ARTnet.wide.adjusted, aes(x = total_part, y = casl.slope)) +
   geom_jitter(width = 0.1, height= 0.1, alpha=0.1, size = 3) +
   xlab("Total Number of Male Partners in the Past 12 Months") +
   ylab("Change in Degree of Casual Relationships at 12- and 0-Month Offsets")
+dev.off()
+
+# ----------------------------------------------------------------------------#
+# SUPPLEMENTAL FIGURE 6
+#-----------------------------------------------------------------------------#
+
+ARTnet.wide.adjusted2 <- ARTnet.long.adjusted %>%
+  filter(RAI == 1 | IAI == 1 | ROI == 1 | IOI == 1) %>%
+  filter(ptype %in% c(1,2)) %>%
+  group_by(AMIS_ID) %>%
+  summarise(deg.total.dos = sum(ongoing2),
+            deg.total.6.month = sum(ongoing3.m6)) 
+
+x <- as.data.frame(table(ARTnet.wide.adjusted2$deg.total.dos))
+colnames(x) <- c("Degree", "Count")            
+
+y <- as.data.frame(table(ARTnet.wide.adjusted2$deg.total.6.month))
+colnames(y) <- c("Degree", "Count")
+
+z <- rbind(x, y)
+z$method <- rep(c("Current", "Retrospective - 6 months"), each = 6)
+z <- z %>%
+  rowwise() %>%
+  group_by(method) %>%
+  mutate(perc = round(Count/sum(Count)*100,0))
+
+png('SF14.png', width=2048, height=1550, res=300)
+ggplot(z, aes(fill=method, y=perc, x=Degree)) +
+  geom_bar(position="dodge", stat="identity") +
+  geom_text(aes(label = perc,
+                perc = perc + 0.05),
+            position = position_dodge(0.9),
+            vjust = -0.5) +
+  scale_fill_brewer(palette="Paired") +
+  labs(fill="Method") +
+  xlab("Degree") +
+  ylab("Percent") +
+  theme_minimal() 
 dev.off()
 
 # ----------------------------------------------------------------------------#
@@ -1236,7 +1218,7 @@ ARTnet.wide.adjusted %>%
   print(n=22)
 
 # ----------------------------------------------------------------------------#
-# SUPPLEMENTAL FIGURE 12
+# SUPPLEMENTAL FIGURE 9
 #-----------------------------------------------------------------------------#
 
 main.outliers <- ARTnet.long %>%
@@ -1246,7 +1228,7 @@ main.outliers <- ARTnet.long %>%
          months.sub.end = (year(SUB_DATE) - year(end.date.2)) * 12 + month(SUB_DATE) - month(end.date.2))
 
 # ----------------------------------------------------------------------------#
-# SUPPLEMENTAL FIGURE 13
+# SUPPLEMENTAL FIGURE 10
 #-----------------------------------------------------------------------------#
 
 casl.outliers <- ARTnet.long %>%
@@ -1254,7 +1236,6 @@ casl.outliers <- ARTnet.long %>%
   select(AMIS_ID, ptype, SUB_DATE, start.date.2, end.date.2, ONGOING) %>%
   mutate(months.sub.start = (year(SUB_DATE) - year(start.date.2)) * 12 + month(SUB_DATE) - month(start.date.2),
          months.sub.end = (year(SUB_DATE) - year(end.date.2)) * 12 + month(SUB_DATE) - month(end.date.2))
-
 
 # ----------------------------------------------------------------------------#
 # ADDITIONAL SUPPLEMENTAL ANALYSES
@@ -1278,56 +1259,36 @@ temp_wide2 <- left_join(ARTnet.wide.adjusted, temp_wide, by = "AMIS_ID")
 
 addmargins(table(temp_wide2$ongoing_all, useNA = "always"))
 
+(311+245)/4904
+
 
 # ----------------------------------------------------------------------------#
-# SUPPLEMENTAL FIGURE 14
+# SUPPLEMENTAL TABLE 5
 #-----------------------------------------------------------------------------#
 
-ARTnet.wide.adjusted2 <- ARTnet.long.adjusted %>%
-  filter(RAI == 1 | IAI == 1 | ROI == 1 | IOI == 1) %>%
-  filter(ptype %in% c(1,2)) %>%
-  group_by(AMIS_ID) %>%
-  summarise(deg.total.dos = sum(ongoing2),
-            deg.total.6.month = sum(ongoing3.m6)) 
+# Proportion of ARTnet participants with more than 1 ongoing partnership
+# by current method and retrospective method at 6 months
 
-x <- as.data.frame(table(ARTnet.wide.adjusted2$deg.total.dos))
-colnames(x) <- c("Degree", "Count")            
+ARTnet.wide.adjusted2 <- ARTnet.wide.adjusted2 %>%
+  mutate(deg.total.6.month_bi = ifelse(deg.total.6.month > 1, 1, 0),
+         deg.total.dos_bi = ifelse(deg.total.dos > 1, 1, 0)) 
 
-y <- as.data.frame(table(ARTnet.wide.adjusted2$deg.total.6.month))
-colnames(y) <- c("Degree", "Count")
+p_hat_6mo <- sum(ARTnet.wide.adjusted2$deg.total.6.month_bi)/4904
 
-z <- rbind(x, y)
-z$method <- rep(c("Current", "Retrospective"), each = 6)
-z <- z %>%
-  rowwise() %>%
-  group_by(method) %>%
-  mutate(perc = round(Count/sum(Count)*100,0))
+p_hat_dos <- sum(ARTnet.wide.adjusted2$deg.total.dos_bi)/4904
 
-png('SF14.png', width=2048, height=1550, res=300)
-ggplot(z, aes(fill=Degree, y=perc, x=method)) +
-  geom_bar(position="dodge", stat="identity") +
-  geom_text(aes(label = perc,
-                 perc = perc + 0.05),
-             position = position_dodge(0.9),
-             vjust = -0.5) +
-  scale_fill_viridis_d() +
-  xlab("Method") +
-  ylab("Percent") +
-  theme_minimal() 
-dev.off()
+# Find 95% CI
 
-png('SF14-2.png', width=2048, height=1550, res=300)
-ggplot(z, aes(fill=Degree, y=Count, x=method)) +
-  geom_bar(position="dodge", stat="identity") +
-  geom_text(aes(label = Count,
-                Count = Count + 0.05),
-            position = position_dodge(0.9),
-            vjust = -0.5) +
-  scale_fill_viridis_d() +
-  xlab("Method") +
-  ylab("Count") +
-  theme_minimal() 
-dev.off()
+alpha <- 0.05
+z <- qnorm(1-alpha/2)
 
+p_hat_6mo + c(-1,1)*z*sqrt(p_hat_6mo*(1-p_hat_6mo)/4904)
+p_hat_dos + c(-1,1)*z*sqrt(p_hat_dos*(1-p_hat_dos)/4904)
 
+ARTnet.wide.adjusted %>%
+  group_by(partners_bi2) %>%
+  summarize(main.duration = mean(main.avgduration.yr, na.rm = T),
+            casl.duration = mean(casl.avgduration.yr, na.rm = T))
+
+summary(ARTnet.wide.adjusted$main.avgduration.yr)
 
