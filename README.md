@@ -3,7 +3,7 @@
 
 This repository contains the analysis scripts and tables for the following study:
 
-> Chandra C, Van Meter C, Goodreau SM, Morris M, Sanchez T, Janulis P, Jenness SM. Gaps in Sexually Transmitted Infection Comparing Sexual Network Degree among Men who have Sex with Men by Measurement Timeframe. Under Review. 
+> Chandra C, Morris M, Van Meter C, Goodreau SM, Sanchez T, Janulis P, Birkett M, Jenness SM. Comparing Sexual Network Mean Active Degree Measurement Metrics among Men who have Sex with Men. Under Review. 
 
 <img src="https://github.com/EpiModel/Mean-Degree-Analysis/blob/master/Figures/Figure1.png">
 
