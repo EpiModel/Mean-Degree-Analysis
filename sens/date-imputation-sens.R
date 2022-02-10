@@ -1,4 +1,7 @@
-
+################################################
+# Sensitivity analysis for date imputation     #
+# Supplemental Table 5                         #
+################################################
 
 n_month_offset_max <- function(start_month, end_month, filter_var='all',
                            output_type='df') {
@@ -306,7 +309,7 @@ n_month_offset_max <- function(start_month, end_month, filter_var='all',
 }
 
 # ----------------------------------------------------------------------------#
-# Supplemental Table 1 (MAX)
+# Supplemental Table 5 (MAX)
 #-----------------------------------------------------------------------------#
 
 all_max <- n_month_offset_max(0,12)
@@ -639,7 +642,7 @@ n_month_offset_min <- function(start_month, end_month, filter_var='all',
 
 
 # ----------------------------------------------------------------------------#
-# Supplemental Table 1 (MIN)
+# Supplemental Table 5 (MIN)
 #-----------------------------------------------------------------------------#
 
 all_min <- n_month_offset_min(0,12)
