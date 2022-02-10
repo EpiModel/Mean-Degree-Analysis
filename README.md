@@ -11,19 +11,19 @@ This repository contains the analysis scripts and tables for the following study
 
 ### Background
 
-Mean degree is an important measure of network connectivity commonly used in HIV/STI epidemiology and public health practice. However, the relative advantages of different degree estimands are not known, specifically for men who have sex with men (MSM) in the United States.
+Mean active degree is an important proxy measure of network connectivity in HIV/STI epidemiology. The performance of different degree estimands are not known for men who have sex with men (MSM) in the United States, especially within the context of fixed choice designs in behavioral surveys.
 
 ### Methods
 
-With cross-sectional data from ARTnet, a web-based study of MSM in the U.S., we compared estimates of mean degree based on ongoing partnerships (day-of-survey method) against partnership start and end dates (month-offset method). We used linear regression to assess observed trends stratified by key demographic groups and partnership characteristics.
+We compared estimates of mean active degree based on reported ongoing main and casual partnerships (current method) against dates of first and last sex (retrospective method) in ARTnet, a cross-sectional survey of U.S. MSM with partnership reporting limited to the 5 most recent partners. We used linear regression to understand the impact of this data truncation on differences between the current and retrospective methods. 
 
 ### Results
 
-Mean degree estimated with the day-of-survey method (1.19) was most similar to mean degree at 3- and 4-month offsets (1.20–1.19) across all partnerships ([Figure 1](https://github.com/EpiModel/Mean-Degree-Analysis/blob/master/Figures/Figure1.png)). Day-of-survey estimands were most similar to month-offset estimands for main partnerships between 0- and 2-month offsets (0.45 vs. 0.45–0.44) and for casual partnerships at 5- and 6-month offsets (0.75 vs. 0.75–0.73). Mean degree estimates declined as month offsets increased from 0 to 12 months. Multiple linear regression suggests this decline was driven by partnership duration and cumulative number of reported partnerships ([Table 3](https://github.com/EpiModel/Mean-Degree-Analysis/blob/master/Figures/Table_3.pdf)).  
+Retrospective estimates declined as the offset was shifted backwards in time. Among participants with more than 5 total past-year partners compared to those with 5 or fewer partners, the average change in main degree between 12- and 0-month offsets was -0.05 (95% CI:  0.08, -0.03) after adjusting for demographics. The adjusted average change in casual degree was -0.40 (95% CI:  0.45,  0.35).
 
 ### Conclusions
 
-The month-offset method may be a suitable alternative to the day-of-survey method when partnership dates are measured within 6 months of the survey overall, but biases may result when inferring degree stratified by demographics. 
+The retrospective method underestimates mean degree in surveys that limit partner reporting, especially for offsets further from the survey date and for casual partnerships.
 
 ## Data
 
