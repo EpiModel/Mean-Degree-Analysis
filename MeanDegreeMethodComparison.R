@@ -11,11 +11,9 @@
 library(ARTnetData, warn.conflicts=F, quietly=T)
 library(tidyverse, warn.conflicts=F, quietly=T)
 library(kableExtra, warn.conflicts=F, quietly=T)
-library(lubridate, message=F)
-library(gridExtra, message=F)
-library(cowplot, message=F)
-library(ggplot2, message=F)
-
+library(lubridate)
+library(ggpubr)
+library(ggplot2)
 
 # Load long data
 ARTnet.long$ONGOING <- as.numeric(ARTnet.long$ONGOING)
@@ -585,7 +583,11 @@ partners_bi2 <- partners_bi2 %>% filter(!is.na(var_val))
 # n_month_offset function to plot comparisons of mean degree by day of survey and 
 # n-month offset for specified month offset ranges.
 
-plot_md_comparisons <- function(md_df, cat, labels) {
+plot_md_comparisons <- function(md_df, cat, labels,
+                                values2, colors2, shape2) {
+  
+  line_type <- c("LINE1" = 1, "LINE2" = 2)
+  shape_type <- c("shape1"=1, "shape2" = 2)
 
     if (length(unique(md_df$var_val)) == 1) {
 
@@ -593,100 +595,105 @@ plot_md_comparisons <- function(md_df, cat, labels) {
       main_plot_title <- paste("Main Partnerships")
       casl_plot_title <- paste("Casual Partnerships")
 
-       total_plot <- ggplot(md_df,
-                            aes(x=factor(month_num), y=md_total)) +
-                     geom_line() +
-                     geom_point() +
-                     geom_errorbar(
-                       aes(ymin=md_total_ll, ymax=md_total_ul),
-                       width=.2,
-                       position=position_dodge(0.05)) +
-                     labs(fill= "Category", title=total_plot_title,
-                          x = "Month Offset", y = "Mean Degree") +
-                     ylim(c(0.9, 1.3)) +
-                     theme_minimal(base_size = 10) 
+     total_plot <- ggplot(md_df,
+                          aes(x=factor(month_num), y=md_total)) +
+       
+                     geom_pointrange(data = md_df,
+                                     aes(ymin=md_total_ll, ymax=md_total_ul,
+                                         x=factor(month_num), y=md_total,
+                                         shape = "shape1"),
+                                     fatten = 2, size = 0.5) +
 
-       total_plot <- total_plot +
-                       geom_hline(aes(yintercept = unique(md_total_dos)),
-                                  linetype = "dotted",
-                                  data = md_df) 
-       total_plot <- total_plot +
-                       geom_hline(aes(yintercept = unique(md_total_dos_ll)),
-                                  linetype = "dashed",
-                                  data = md_df) 
-       total_plot <- total_plot +
-                       geom_hline(aes(yintercept = unique(md_total_dos_ul)),
-                                  linetype = "dashed",
-                                  data = md_df)
-       total_plot <- total_plot + scale_x_discrete(breaks = factor(
-         unique(md_df$month_num)),
-                                                   labels = unique(
-                                                     md_df$month))
+                     labs(fill= "Category", title=total_plot_title,
+                          x = "Months Prior to Survey Date", 
+                          y = "Mean Degree") +
+                     ylim(c(0.9, 1.3)) +
+                     theme_minimal(base_size = 10) +
+         
+                    scale_shape_manual(name = "Retrospective Method",
+                                       values = 16,
+                                       labels = "Mean Degree & 95% CI") +
+
+                    geom_hline(data = md_df,
+                               aes(yintercept = unique(md_total_dos),
+                               linetype = "LINE1")) +
+       
+                    geom_hline(data = md_df,
+                               aes(yintercept = unique(md_total_dos_ll),
+                               linetype = "LINE2")) +
+       
+                    geom_hline(data = md_df,
+                               aes(yintercept = unique(md_total_dos_ul),
+                               linetype = "LINE2")) +
+       
+                    scale_linetype_manual(name = "Current Method", 
+                                          values = c("dotted","dashed"),
+                                          labels = c("Mean Degree",
+                                                     "95% CI")) 
 
        main_plot <- ggplot(md_df,
                             aes(x=factor(month_num), y=md_main),
                             theme(axis.text.x = month)) +
-                     geom_line() +
-                     geom_point()+
-                     geom_errorbar(
-                       aes(ymin=md_main_ll, ymax=md_main_ul),
-                       width=.2,
-                       position=position_dodge(0.05)) +
+                    geom_pointrange(data = md_df,
+                         aes(ymin=md_main_ll, ymax=md_main_ul,
+                             x=factor(month_num), y=md_main,
+                             shape = "shape1"),
+                         fatten = 2, size = 0.5) +
+         
                     labs(title=main_plot_title,
-                          x = "Month Offset", y = "Mean Degree") +
-                    theme(legend.position = "none") +
-                    ylim(c(0.35, 0.5)) +
-                    theme_minimal(base_size = 10)
+                          x = "Months Prior to Survey Date", 
+                          y = "Mean Degree") +
+                                        ylim(c(0.35, 0.5)) +
+                    theme_minimal(base_size = 10) +
 
-       main_plot <- main_plot +
-                       geom_hline(aes(yintercept = unique(md_main_dos)),
-                                  linetype = "dotted",
-                                  data = md_df)
-       main_plot <- main_plot +
-                       geom_hline(aes(yintercept = unique(md_main_dos_ll)),
-                                  linetype = "dashed",
-                                  data = md_df)
-       main_plot <- main_plot +
-                       geom_hline(aes(yintercept = unique(md_main_dos_ul)),
-                                  linetype = "dashed",
-                                  data = md_df)
-       main_plot <- main_plot + scale_x_discrete(breaks = factor(
-         unique(md_df$month_num)),
-                                                   labels = unique(md_df$month))
+                    geom_hline(aes(yintercept = unique(md_main_dos),
+                                   linetype = "LINE1"),
+                                   data = md_df) +
+
+                    geom_hline(aes(yintercept = unique(md_main_dos_ll),
+                               linetype = "LINE2"),
+                               data = md_df) +
+      
+                    geom_hline(aes(yintercept = unique(md_main_dos_ul),
+                               linetype = "LINE2"),
+                               data = md_df) +
+         
+                    theme(legend.position = "none") 
 
        casl_plot <- ggplot(md_df,
                             aes(x=factor(month_num), y=md_casl),
                             theme(axis.text.x = month)) +
-                     geom_line() +
-                     geom_point()+
-                     geom_errorbar(
-                       aes(ymin=md_casl_ll, ymax=md_casl_ul),
-                       width=.2,
-                       position=position_dodge(0.05)) +
+         
+                    geom_pointrange(data = md_df,
+                         aes(ymin=md_casl_ll, ymax=md_casl_ul,
+                             x=factor(month_num), y=md_casl,
+                             shape = "shape1"),
+                         fatten = 2, size = 0.5) +
+
                      labs(title=casl_plot_title,
-                          x = "Month Offset", y = "Mean Degree") +
+                          x = "Months Prior to Survey Date", 
+                          y = "Mean Degree") +
                      theme(legend.position = "none") +
                      ylim(c(0.6, 0.85)) +
-                     theme_minimal(base_size = 10)
+                     theme_minimal(base_size = 10) +
+       
+                     geom_hline(aes(yintercept = unique(md_casl_dos),
+                                linetype = "LINE1"),
+                                data = md_df) +
+       
+                     geom_hline(aes(yintercept = unique(md_casl_dos_ll),
+                                linetype = "LINE2"),
+                                data = md_df) +
 
-       casl_plot <- casl_plot +
-                       geom_hline(aes(yintercept = unique(md_casl_dos)),
-                                  linetype = "dotted",
-                                  data = md_df)
-       casl_plot <- casl_plot +
-                       geom_hline(aes(yintercept = unique(md_casl_dos_ll)),
-                                  linetype = "dashed",
-                                  data = md_df)
-       casl_plot <- casl_plot +
-                       geom_hline(aes(yintercept = unique(md_casl_dos_ul)),
-                                  linetype = "dashed",
-                                  data = md_df)
-       casl_plot <- casl_plot + scale_x_discrete(breaks = factor(
-         unique(md_df$month_num)),
-                                                   labels = unique(md_df$month))
-
-       #require(gridExtra)
-       suppressMessages(grid.arrange(total_plot, main_plot, casl_plot, nrow=3))
+                     geom_hline(aes(yintercept = unique(md_casl_dos_ul),
+                                linetype = "LINE2"),
+                                data = md_df) +
+         
+                     theme(legend.position = "none") 
+       
+       #Arrange plots together
+       ggarrange(total_plot, main_plot, casl_plot, ncol = 1, common.legend = T, legend = "right")
+       
 
       } else {
 
@@ -695,75 +702,113 @@ plot_md_comparisons <- function(md_df, cat, labels) {
             casl_plot_title <- paste("Casual Partnerships")
 
              total_plot <- ggplot(md_df,
-                            aes(x=factor(month_num), y=md_total,
-                                group=var_val, color=var_val),
-                            theme(axis.text.x = month)) +
-                     geom_line() +
-                     geom_point()+
-                     geom_errorbar(
-                       aes(ymin=md_total_ll, ymax=md_total_ul),
-                       width=.2,
-                       position=position_dodge(0.05)) +
-                     labs(title=total_plot_title,
-                          x = "Month Offset", y = "Mean Degree") +
-                     scale_color_discrete(name=cat,
-                                          labels=labels) +
-                     ylim(c(0.5, 2)) 
-
-      total_plot <- total_plot +
-  geom_hline(data = md_df,
-             aes(yintercept = md_total_dos, col = var_val),
-             linetype = "dashed") +
-             theme_minimal(base_size = 10)
+                                  aes(x=factor(month_num), y=md_total,
+                                  group=var_val, color=var_val),
+                                  theme(axis.text.x = month)) +
+               
+                           geom_line() +
+               
+                           labs(title=total_plot_title,
+                                x = "Months Prior to Survey Date", y = "Mean Degree") +
+               
+                           geom_pointrange(data = md_df,
+                               aes(ymin=md_total_ll, ymax=md_total_ul,
+                               x=factor(month_num), y=md_total,
+                               shape = var_val),
+                               fatten = 2, size = 0.5) +
+          
+                           scale_shape_manual(name="Retrospective Method",
+                                              labels=labels,
+                                              values = shape2,
+                                              guide=guide_legend(override.aes = list(color=colors2))) +
+                     
+                     ylim(c(0.5, 2)) +
+                     
+                     geom_hline(data = md_df,
+                               aes(yintercept = md_total_dos,
+                                   color = var_val,
+                                   linetype = var_val)) +
+                     
+                     scale_linetype_manual(name = "Current Method",
+                                           values = values2,
+                                           labels = labels,
+                                           guide=guide_legend(override.aes = list(color=colors2))) +
+               
+                     guides(color = "none") + theme_minimal(base_size = 10) 
 
        main_plot <- ggplot(md_df,
                             aes(x=factor(month_num), y=md_main,
                                 group=var_val, color=var_val),
                             theme(axis.text.x = month)) +
-                     geom_line() +
-                     geom_point() +
-                     geom_errorbar(
-                       aes(ymin=md_main_ll, ymax=md_main_ul),
-                       width=.2,
-                       position=position_dodge(0.05)) +
+         
+                    geom_line() +
+         
+                    geom_pointrange(data = md_df,
+                         aes(ymin=md_main_ll, ymax=md_main_ul,
+                             x=factor(month_num), y=md_main,
+                             shape = var_val),
+                         fatten = 2, size = 0.5) +
+         
+                    scale_shape_manual(name="Retrospective Method",
+                            labels=labels,
+                            values = shape2,
+                            guide=guide_legend(override.aes = list(color=colors2))) +
+         
                      labs(title=main_plot_title,
-                          x = "Month Offset", y = "Mean Degree") +
+                          x = "Months Prior to Survey Date", y = "Mean Degree") +
                      theme_minimal(base_size = 10) +
                      theme(legend.position = "none") +
-                     ylim(c(0.2, 0.6)) 
+                     ylim(c(0.2, 0.55)) +
+         
+                     geom_hline(data = md_df,
+                                aes(yintercept = md_main_dos,
+                                    color = var_val,
+                                    linetype = var_val)) +
+         
+                     scale_linetype_manual(name = "Current Method",
+                               values = values2,
+                               labels = labels,
+                               guide=guide_legend(override.aes = list(color=colors2)))
 
-      main_plot <- main_plot +
-  geom_hline(data = md_df,
-             aes(yintercept = md_main_dos, col = var_val),
-             linetype = "dashed") 
 
        casl_plot <- ggplot(md_df,
                             aes(x=factor(month_num), y=md_casl,
                                 group=var_val, color=var_val),
                             theme(axis.text.x = month)) +
-                     geom_line() +
-                     geom_point()+
-                     geom_errorbar(
-                       aes(ymin=md_casl_ll, ymax=md_casl_ul),
-                       width=.2,
-                       position=position_dodge(0.05)) +
+         
+                    geom_line() +
+                     
+                    geom_pointrange(data = md_df,
+                         aes(ymin=md_casl_ll, ymax=md_casl_ul,
+                             x=factor(month_num), y=md_casl,
+                             shape = var_val),
+                         fatten = 2, size = 0.5) +
+         
+                    scale_shape_manual(name="Retrospective Method",
+                            labels=labels,
+                            values = shape2,
+                            guide=guide_legend(override.aes = list(color=colors2))) +
+         
+         
                      labs(title=casl_plot_title,
-                          x = "Month Offset", y = "Mean Degree") +
+                          x = "Months Prior to Survey Date", y = "Mean Degree") +
                      theme_minimal(base_size = 10) +
                      theme(legend.position = "none") +
-                     ylim(c(0.4, 1.2)) 
+                     ylim(c(0.1, 1.6)) +
+                    
+                     geom_hline(data = md_df,
+                                aes(yintercept = md_casl_dos,
+                                    color = var_val,
+                                    linetype = var_val)) +
+         
+                     scale_linetype_manual(name = "Current Method",
+                               values = values2,
+                               labels = labels,
+                               guide = guide_legend(override.aes = list(color=colors2)))
 
-       casl_plot <- casl_plot +
-  geom_hline(data = md_df,
-             aes(yintercept = md_casl_dos, col = var_val),
-             linetype = "dashed") 
 
-       #require(gridExtra)
-       #require(cowplot)
-       legend <- get_legend(total_plot)
-       total_plot <- total_plot + theme(legend.position = "none")
-       grid.arrange(arrangeGrob(total_plot, main_plot, casl_plot), legend, ncol=2,
-                    widths=c(5,1))
+       #Arrange plots together
+       ggarrange(total_plot, main_plot, casl_plot, ncol = 1, common.legend = T, legend = "right")
 
       }
 
@@ -784,8 +829,10 @@ dev.off()
 
 png('Figure3.png', width=2048, height=1536, res=300)
 plot_md_comparisons(partners_bi2, "Total Partners",
-                    c("5 or fewer", 
-                      "6 or more"))
+                    c("\u2264 5 partners", 
+                      "> 5 partners"), values2 = c(2,2),
+                    colors2 = c("#F8766D", "#00BFC4"),
+                    shape2 = c(16,16))
 dev.off()
 
 # ----------------------------------------------------------------------------#
@@ -794,7 +841,10 @@ dev.off()
 
 png('SF1.png', width=2048, height=1536, res=300)
 plot_md_comparisons(race.cat, "Race/Ethnicity",
-                    c("Black","Hispanic", "Other", "White"))
+                    c("Black","Hispanic", "Other", "White"),
+                    values2 = rep(2,4),
+                    colors2 = c("#F8766D", "#7CAE00", "#00BFC4", "#C77CFF"),
+                    shape2 = rep(16,4))
 dev.off()
 
 # ----------------------------------------------------------------------------#
@@ -807,7 +857,10 @@ plot_md_comparisons(age.cat, "Age Category",
                       "25-34 years",
                       "35-44 years",
                       "45-54 years",
-                      "55-65 years"))
+                      "55-65 years"),
+                    values2 = rep(2,5),
+                    colors2 = c("#F8766D", "#C49A00", "#7CAE00", "#00BFC4", "#C77CFF"),
+                    shape2 = rep(16,5))
 dev.off()
 
 # ----------------------------------------------------------------------------#
@@ -819,7 +872,10 @@ plot_md_comparisons(region, "Census Region",
                     c("Northeast",
                       "Midwest",
                       "South",
-                      "West"))
+                      "West"),
+                    values2 = rep(2,4),
+                    colors2 = c("#F8766D", "#7CAE00", "#00BFC4", "#C77CFF"),
+                    shape2 = rep(16,4))
 dev.off()
 
 # ----------------------------------------------------------------------------#
@@ -830,7 +886,10 @@ png('SF4.png', width=2900, height=1600, res=350)
 plot_md_comparisons(education, "Education Level",
                     c("High school or below",
                       "Some college",
-                      "College and above"))
+                      "College and above"),
+                    values2 = rep(2,3),
+                    colors2 = c("#F8766D", "#7CAE00", "#619CFF"),
+                    shape2 = rep(16,3))
 dev.off()
 
 # ----------------------------------------------------------------------------#
@@ -842,7 +901,10 @@ plot_md_comparisons(income, "Annual Household Income",
                     c("$0 to $19,999",
                       "$20,000 to $39,999",
                       "$40,000 to $74,999",
-                      "$75,000 or more"))
+                      "$75,000 or more"),
+                    values2 = rep(2,4),
+                    colors2 = c("#F8766D", "#7CAE00", "#00BFC4", "#C77CFF"),
+                    shape2 = rep(16,4))
 dev.off()
 
 # ----------------------------------------------------------------------------#
