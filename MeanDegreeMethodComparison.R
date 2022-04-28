@@ -10,10 +10,9 @@
 ## Load Data and Packages---------------------------------------------------------------------
 library(ARTnetData, warn.conflicts=F, quietly=T)
 library(tidyverse, warn.conflicts=F, quietly=T)
+library(lubridate, warn.conflicts=F, quietly=T)
 library(kableExtra, warn.conflicts=F, quietly=T)
-library(lubridate)
-library(ggpubr)
-library(ggplot2)
+library(ggpubr, warn.conflicts=F, quietly=T)
 
 # Load long data
 ARTnet.long$ONGOING <- as.numeric(ARTnet.long$ONGOING)
@@ -658,7 +657,12 @@ plot_md_comparisons <- function(md_df, cat, labels,
                                linetype = "LINE2"),
                                data = md_df) +
          
-                    theme(legend.position = "none") 
+                    theme(legend.position = "none") +
+         
+                    scale_linetype_manual(name = "Current Method", 
+                                          values = c("dotted","dashed"),
+                                          labels = c("Mean Degree",
+                                                     "95% CI")) 
 
        casl_plot <- ggplot(md_df,
                             aes(x=factor(month_num), y=md_casl),
@@ -689,7 +693,12 @@ plot_md_comparisons <- function(md_df, cat, labels,
                                 linetype = "LINE2"),
                                 data = md_df) +
          
-                     theme(legend.position = "none") 
+                     theme(legend.position = "none") +
+         
+                     scale_linetype_manual(name = "Current Method", 
+                                           values = c("dotted","dashed"),
+                                           labels = c("Mean Degree",
+                                                      "95% CI")) 
        
        #Arrange plots together
        ggarrange(total_plot, main_plot, casl_plot, ncol = 1, common.legend = T, legend = "right")
