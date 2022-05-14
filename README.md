@@ -11,19 +11,19 @@ This repository contains the analysis scripts and tables for the following study
 
 ### Background
 
-Mean active degree is an important proxy measure of network connectivity in HIV/STI epidemiology. The performance of different degree estimands are not known for men who have sex with men (MSM) in the United States, especially within the context of fixed choice designs in behavioral surveys.
+Mean active degree is an important proxy measure of cross-sectional network connectivity commonly used in HIV/STI epidemiology research. No current studies have compared measurement methods of mean degree using cross-sectional surveys for men who have sex with men (MSM) in the United States.
 
 ### Methods
 
-We compared estimates of mean active degree based on reported ongoing main and casual partnerships (current method) against dates of first and last sex (retrospective method) in ARTnet, a cross-sectional survey of U.S. MSM with partnership reporting limited to the 5 most recent partners. We used linear regression to understand the impact of this data truncation on differences between the current and retrospective methods. 
+We compared mean degree estimates based on reported ongoing main and casual sexual partnerships (current method) against dates of first and last sex (retrospective method) from 0–12 months prior to survey date in ARTnet, a cross-sectional survey of MSM in the U.S. (2017–2019). ARTnet collected data on the number of sexual partners in the past year but limited reporting on details used for calculating mean degree to the 5 most recent partners. We used linear regression to understand the impact of truncated partnership data on mean degree estimation.
 
 ### Results
 
-Retrospective estimates declined as the offset was shifted backwards in time. Among participants with more than 5 total past-year partners compared to those with 5 or fewer partners, the average change in main degree between 12- and 0-month offsets was -0.05 (95% CI:  0.08, -0.03) after adjusting for demographics. The adjusted average change in casual degree was -0.40 (95% CI:  0.45,  0.35).
+Retrospective method mean degree systematically decreased as the month at which it was calculated increased from 0–12 months prior to survey date. Among participants with >5 partners in the past year compared to those with ≤5, the average change in main degree between 12 and 0 months prior to survey date was -0.05 (95% CI:  0.08, -0.03) after adjusting for race/ethnicity, age, and education. The adjusted average change in casual degree was -0.40 (95% CI:  0.45,  0.35).
 
 ### Conclusions
 
-The retrospective method underestimates mean degree in surveys that limit partner reporting, especially for offsets further from the survey date and for casual partnerships.
+The retrospective method underestimates mean degree for MSM in surveys with truncated partnership data, especially for casual partnerships. The current method is less prone to bias from partner truncation when the target population experiences higher cumulative partners per year.
 
 ## Data
 
