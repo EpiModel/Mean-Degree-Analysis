@@ -3,7 +3,7 @@
 
 This repository contains the analysis scripts and tables for the following study:
 
-> Chandra C, Morris M, Van Meter C, et al. Comparing Sexual Network Mean Active Degree Measurement Metrics among Men who have Sex with Men. Sexually Transmitted Diseases. Published online September 14, 2022:10.1097/OLQ.0000000000001708. doi:10.1097/OLQ.0000000000001708
+> Chandra, C., Morris, M., Van Meter, C., Goodreau, S. M., Sanchez, T., Janulis, P., Birkett, M., & Jenness, S. M. (2022). Comparing Sexual Network Mean Active Degree Measurement Metrics among Men who have Sex with Men. Sexually Transmitted Diseases, 10.1097/OLQ.0000000000001708. https://doi.org/10.1097/OLQ.0000000000001708
 
 <img src="https://github.com/EpiModel/Mean-Degree-Analysis/blob/master/Figures/Figure1.png">
 
